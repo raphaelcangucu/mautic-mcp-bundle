@@ -33,6 +33,7 @@ Prefer dedicated read tools before mutations. Use previews and `dryRun` whenever
 - `mautic_read_segments`, `mautic_search_campaigns`, `mautic_fetch_campaign`
 - `mautic_read_campaign_flow` with `list_types`, `get`, or `validate`
 - `mautic_read_emails`, `mautic_preview_email_send`
+- `mautic_read_email_html` before any HTML edit; preserve `dateModified` for the write
 - `mautic_read_email_templates`, including complete HTML and preview/lock state
 - `mautic_analytics`
 - `mautic_read_crm`

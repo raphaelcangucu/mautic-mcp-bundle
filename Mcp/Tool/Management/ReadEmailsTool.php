@@ -18,7 +18,7 @@ final class ReadEmailsTool extends AbstractMcpTool
     ) {}
 
     /**
-     * Read emails. Actions: list, get.
+     * List email metadata or get one email with its complete customHtml, plainText, preheader, preview URL/state, template, and lock state. Use mautic_read_email_html when only editable source is needed.
      */
     #[McpTool(name: 'mautic_read_emails', annotations: new ToolAnnotations(readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false), outputSchema: \MauticPlugin\MauticMcpBundle\OutputSchemas::OBJECT)]
     public function __invoke(#[\Mcp\Capability\Attribute\Schema(enum: ['list', 'get'])] string $action = 'list', ?int $id = null, string $query = '', int $limit = 20, int $page = 1): array

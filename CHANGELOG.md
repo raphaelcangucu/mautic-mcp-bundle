@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.7.1 - 2026-09-01
+
+- Add `mautic_read_email_html` with an explicit output schema for complete HTML source retrieval.
+- Clarify that `mautic_read_emails` with `action=get` returns complete editable content.
+
 ## 0.7.0 - 2026-09-01
 
 - Return complete HTML, plain text, preheader, visual template, absolute preview URL, preview state, and editing-lock metadata when reading emails.

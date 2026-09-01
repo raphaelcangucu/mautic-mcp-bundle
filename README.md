@@ -55,12 +55,13 @@ Restart Codex and ask it to run `mautic_health`.
 
 ## Capabilities
 
-The server currently publishes 26 tools, split into dedicated read and write operations:
+The server currently publishes 27 tools, split into dedicated read and write operations:
 
 - contacts, timelines, deduplication, merge, points, stages, companies, fields, and tags;
 - segments and contact membership;
 - campaigns and complete graph editing, including event deletion and `lead.changetags` actions;
 - emails with complete HTML read/write, absolute preview URLs, public-preview and editing-lock controls, safe send preview, test sends, cloning, and A/B variants;
+- dedicated `mautic_read_email_html` retrieval with an explicit HTML output schema for safe read-modify-write workflows;
 - reusable email-template creation, HTML editing, preview control, and deletion;
 - campaign and email analytics;
 - forms and submissions;
