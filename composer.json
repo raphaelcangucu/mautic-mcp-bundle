@@ -30,6 +30,9 @@
     "extra": {
         "install-directory-name": "MauticMcpBundle"
     },
+    "suggest": {
+        "raphaelcangucu/mautic-meta-bundle": "Adds official WhatsApp and Instagram read, send, template, consent, and diagnostics tools."
+    },
     "require": {
         "php": "^8.2",
         "mautic/core-lib": "^7.0",

@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.9.0 - 2026-09-01
+
+- Add live, read-only Instagram Graph API access for profiles, media, comments, insights, conversations, and messages.
+- Add WhatsApp media and interactive-message delivery through the durable outbound queue.
+- Add MCP CRUD for encrypted Meta connections and channel assets, with confirmation for destructive operations.
+- Expand the official Meta integration to four dedicated MCP tools.
+
+## 0.8.0 - 2026-09-01
+
+- Add separate read, send, and administration tools for the official Meta integration.
+- Read Meta connections, assets, WhatsApp templates, contact identities, message logs, and durable queue jobs.
+- Queue WhatsApp and Instagram messages with idempotency, dry-run support, and automatic retries.
+- Manage WhatsApp templates, consent, identity/contact links, synchronization, and external connection diagnostics.
+
 ## 0.7.1 - 2026-09-01
 
 - Add `mautic_read_email_html` with an explicit output schema for complete HTML source retrieval.

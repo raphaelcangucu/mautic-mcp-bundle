@@ -1,6 +1,6 @@
 ---
 name: mautic-mcp
-description: Operate Mautic through its authenticated MCP server, including contacts, segments, campaigns and flows, emails, analytics, CRM, forms, webhooks, and incremental events.
+description: Operate Mautic through its authenticated MCP server, including contacts, segments, campaigns and flows, emails, analytics, CRM, forms, webhooks, incremental events, WhatsApp, and Instagram.
 ---
 
 # Mautic MCP
@@ -41,6 +41,8 @@ Prefer dedicated read tools before mutations. Use previews and `dryRun` whenever
 - `mautic_read_webhooks`
 - `mautic_read_tags`
 - `mautic_read_events` for cursor-based incremental synchronization
+- `mautic_read_meta` for stored Meta connections, assets, templates, identities, messages, and queues
+- `mautic_read_meta_api` for live Instagram profile, media, comments, insights, and inbox reads
 
 ## Write tools
 
@@ -53,6 +55,8 @@ Prefer dedicated read tools before mutations. Use previews and `dryRun` whenever
 - `mautic_manage_crm`
 - `mautic_manage_webhooks`
 - `mautic_manage_tags`, including tag creation and contact assignment/removal
+- `mautic_send_meta_message` for queued WhatsApp and Instagram delivery
+- `mautic_manage_meta` for Meta connection/asset/template administration and consent
 
 `mautic_write_campaign_flow` can replace the complete graph (including replacing it with an empty graph) or remove specific persisted event IDs. `delete_events` rejects parent deletion when children remain unless `cascade=true`. Read the current graph first, perform a `dryRun`, and only then execute with confirmation.
 
