@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.10.0 - 2026-09-01
+
+- Add `mautic_meta_setup`, a read-only configuration assistant for the optional official Meta bundle.
+- Report the current connection/asset readiness state and safe per-connection webhook URLs without exposing credentials.
+- Document installation, Meta App setup, permissions, assets, webhooks, campaigns, queues, MCP workflows, and troubleshooting as structured MCP output.
+
 ## 0.9.1 - 2026-09-01
 
 - Report `replayed=false` on the first idempotent mutation and `replayed=true` only when the cached result is actually reused.

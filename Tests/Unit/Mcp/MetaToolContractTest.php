@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace MauticPlugin\MauticMcpBundle\Tests\Unit\Mcp;
 
 use MauticPlugin\MauticMcpBundle\Mcp\Tool\Meta\ManageMetaTool;
+use MauticPlugin\MauticMcpBundle\Mcp\Tool\Meta\MetaSetupTool;
 use MauticPlugin\MauticMcpBundle\Mcp\Tool\Meta\ReadMetaApiTool;
 use MauticPlugin\MauticMcpBundle\Mcp\Tool\Meta\ReadMetaTool;
 use MauticPlugin\MauticMcpBundle\Mcp\Tool\Meta\SendMetaMessageTool;
@@ -29,6 +30,7 @@ final class MetaToolContractTest extends TestCase
     public static function tools(): iterable
     {
         yield [ReadMetaTool::class, 'mautic_read_meta'];
+        yield [MetaSetupTool::class, 'mautic_meta_setup'];
         yield [ReadMetaApiTool::class, 'mautic_read_meta_api'];
         yield [SendMetaMessageTool::class, 'mautic_send_meta_message'];
         yield [ManageMetaTool::class, 'mautic_manage_meta'];

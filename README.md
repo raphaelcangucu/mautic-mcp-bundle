@@ -17,7 +17,7 @@ Install it directly from GitHub inside your Mautic project:
 
 ```bash
 composer config repositories.mautic-mcp vcs https://github.com/raphaelcangucu/mautic-mcp-bundle
-composer require raphaelcangucu/mautic-mcp-bundle:^0.9
+composer require raphaelcangucu/mautic-mcp-bundle:^0.10
 php bin/console mautic:plugins:reload
 php bin/console cache:clear --env=prod
 ```
@@ -55,7 +55,7 @@ Restart Codex and ask it to run `mautic_health`.
 
 ## Capabilities
 
-The server currently publishes 31 tools, split into dedicated read and write operations:
+The server currently publishes 32 tools, split into dedicated read and write operations:
 
 - contacts, timelines, deduplication, merge, points, stages, companies, fields, and tags;
 - segments and contact membership;
@@ -68,7 +68,15 @@ The server currently publishes 31 tools, split into dedicated read and write ope
 - webhooks and cursor-based incremental events.
 - optional official Meta integration through `MauticMetaBundle`: connection/asset CRUD, WhatsApp templates, identities, message logs, durable queues, WhatsApp text/template/media/interactive delivery, Instagram replies/DMs and live reads, consent management, and diagnostics.
 
-The Meta tools are `mautic_read_meta`, `mautic_read_meta_api`, `mautic_send_meta_message`, and `mautic_manage_meta`. Install and enable `raphaelcangucu/mautic-meta-bundle` on the same Mautic instance to use them.
+The Meta tools are `mautic_meta_setup`, `mautic_read_meta`, `mautic_read_meta_api`, `mautic_send_meta_message`, and `mautic_manage_meta`. Install and enable `raphaelcangucu/mautic-meta-bundle` on the same Mautic instance to use them.
+
+Start Meta configuration with:
+
+```json
+{"section":"status"}
+```
+
+using `mautic_meta_setup`. Its sections cover `installation`, `meta_app`, `connections`, `assets`, `webhooks`, `campaigns`, `queue`, `permissions`, `mcp`, and `troubleshooting`. The result includes current readiness checks, safe UI links, and a callback URL for every configured connection without returning tokens or app secrets. Pass `connectionId` with `section=webhooks` to obtain one exact callback URL.
 
 All tools publish MCP annotations and output schemas. Mutations support controls such as `dryRun`, `confirm`, `idempotencyKey`, and optimistic concurrency where applicable.
 

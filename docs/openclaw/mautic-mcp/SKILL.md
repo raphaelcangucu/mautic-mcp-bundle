@@ -7,6 +7,8 @@ description: Operate Mautic through its authenticated MCP server, including cont
 
 Use the configured Mautic MCP server. Call `mautic_health` first when identity, permissions, Mautic version, or MCP version matters.
 
+For the official Meta integration, call `mautic_meta_setup` with `section=status` before creating or changing anything. Follow its reported issues in order, then request the relevant section (`connections`, `assets`, `webhooks`, `campaigns`, `queue`, `permissions`, or `troubleshooting`). Never ask the user to paste Meta access tokens or app secrets into chat; direct them to the encrypted Mautic configuration screen or pass secrets only through an approved secure MCP mutation.
+
 Use `mautic_read_tags` to list or fetch tags and `mautic_manage_tags` to create, update, delete, or associate tags with contacts. Create tags before referencing them in campaign flows.
 
 To tag a contact while a campaign runs, add an action event such as:
@@ -43,6 +45,7 @@ Prefer dedicated read tools before mutations. Use previews and `dryRun` whenever
 - `mautic_read_events` for cursor-based incremental synchronization
 - `mautic_read_meta` for stored Meta connections, assets, templates, identities, messages, and queues
 - `mautic_read_meta_api` for live Instagram profile, media, comments, insights, and inbox reads
+- `mautic_meta_setup` for Meta installation status and contextual configuration instructions
 
 ## Write tools
 
