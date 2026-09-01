@@ -1,0 +1,46 @@
+{
+    "name": "raphaelcangucu/mautic-mcp-bundle",
+    "description": "Full MCP server for Mautic automation, campaigns, email, analytics, CRM, tags, forms, webhooks, and incremental events.",
+    "type": "mautic-plugin",
+    "license": "GPL-3.0-or-later",
+    "homepage": "https://github.com/raphaelcangucu/mautic-mcp-bundle",
+    "support": {
+        "issues": "https://github.com/raphaelcangucu/mautic-mcp-bundle/issues",
+        "source": "https://github.com/raphaelcangucu/mautic-mcp-bundle"
+    },
+    "authors": [
+        {
+            "name": "Rahul Shinde",
+            "email": "shinde.r.a@gmail.com"
+        },
+        {
+            "name": "Raphael Cangucu"
+        }
+    ],
+    "keywords": [
+        "mautic",
+        "mautic-plugin",
+        "mcp",
+        "model-context-protocol",
+        "ai-tools",
+        "developer-tools",
+        "campaign-automation",
+        "symfony"
+    ],
+    "extra": {
+        "install-directory-name": "MauticMcpBundle"
+    },
+    "require": {
+        "php": "^8.2",
+        "mautic/core-lib": "^7.0",
+        "symfony/mcp-bundle": "^0.6"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^11.0",
+        "phpstan/phpstan": "^2.0",
+        "friendsofphp/php-cs-fixer": "^3.0"
+    },
+    "config": {
+        "sort-packages": true
+    }
+}

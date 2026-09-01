@@ -1,0 +1,10 @@
+parameters:
+    level: 5
+    paths:
+        - Application
+        - Mcp
+        - Domain
+    bootstrapFiles:
+        - ../../vendor/autoload.php
+        - phpstan-bootstrap.php
+    tmpDir: ../../var/cache/phpstan-mcp

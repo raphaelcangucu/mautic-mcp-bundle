@@ -1,0 +1,9 @@
+/vendor/
+/.phpunit.cache/
+/.phpstan.cache/
+/.idea/
+/.vscode/
+.DS_Store
+.env
+.env.*
+auth.json
