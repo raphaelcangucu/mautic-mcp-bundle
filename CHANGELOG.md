@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.1 - 2026-09-01
+
+- Report `replayed=false` on the first idempotent mutation and `replayed=true` only when the cached result is actually reused.
+
 ## 0.9.0 - 2026-09-01
 
 - Add live, read-only Instagram Graph API access for profiles, media, comments, insights, conversations, and messages.

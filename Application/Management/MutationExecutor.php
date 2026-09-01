@@ -22,7 +22,9 @@ final class MutationExecutor
         }
 
         $hash = hash('sha256', json_encode($payload, JSON_THROW_ON_ERROR));
-        $item = $this->cache->get('mautic_mcp_idempotency_'.hash('sha256', $scope.':'.$key), function (ItemInterface $item) use ($hash, $operation): array {
+        $executed = false;
+        $item = $this->cache->get('mautic_mcp_idempotency_'.hash('sha256', $scope.':'.$key), function (ItemInterface $item) use ($hash, $operation, &$executed): array {
+            $executed = true;
             $item->expiresAfter(86400);
 
             return ['hash' => $hash, 'result' => $operation()];
@@ -32,7 +34,7 @@ final class MutationExecutor
             throw new ConflictHttpException('The idempotencyKey was already used with a different payload.');
         }
 
-        return $item['result'] + ['idempotencyKey' => $key, 'replayed' => true];
+        return $item['result'] + ['idempotencyKey' => $key, 'replayed' => !$executed];
     }
 
     public function dryRun(string $resource, string $action, array $payload): array
