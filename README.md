@@ -13,13 +13,16 @@ This is an extended fork of [`shinde-rahul/plugin-mautic-mcp`](https://github.co
 
 ## Installation
 
-Install as a Mautic plugin using Composer:
+Install it directly from GitHub inside your Mautic project:
 
 ```bash
-composer require raphaelcangucu/mautic-mcp-bundle
+composer config repositories.mautic-mcp vcs https://github.com/raphaelcangucu/mautic-mcp-bundle
+composer require raphaelcangucu/mautic-mcp-bundle:^0.7
 php bin/console mautic:plugins:reload
 php bin/console cache:clear --env=prod
 ```
+
+Alternatively, clone the bundle into `plugins/MauticMcpBundle` and ensure the root Mautic project has `symfony/mcp-bundle:^0.6` installed. Direct installation without the VCS repository declaration will become available after the package is published on Packagist.
 
 The Streamable HTTP endpoint is available at:
 
