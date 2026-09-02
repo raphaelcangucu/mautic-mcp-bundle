@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.13.1 - 2026-09-02
+
+- Pass the top-level `idempotencyKey` through the management closure to `upsert_identity`; the key remains forbidden inside `data`.
+
 ## 0.13.0 - 2026-09-02
 
 - Add explicit `upsert_identity` creation/update semantics to `mautic_manage_meta`.

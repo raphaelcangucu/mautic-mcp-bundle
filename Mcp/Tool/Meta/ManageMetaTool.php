@@ -43,7 +43,7 @@ final class ManageMetaTool extends AbstractMcpTool
         $payload = compact('action', 'id', 'data', 'confirm');
         if ($dryRun) { return $this->mutations->dryRun('meta', $action, $this->redactCredentials($payload)); }
 
-        return $this->mutations->execute('meta', $idempotencyKey, $payload, function () use ($action, $id, $data, $confirm): array {
+        return $this->mutations->execute('meta', $idempotencyKey, $payload, function () use ($action, $id, $data, $confirm, $idempotencyKey): array {
             try {
                 return $this->service->manage($action, $id, $data, $confirm, $idempotencyKey);
             } catch (\Symfony\Component\HttpKernel\Exception\NotFoundHttpException $exception) {

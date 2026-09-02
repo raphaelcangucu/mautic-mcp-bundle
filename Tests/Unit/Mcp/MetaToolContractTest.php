@@ -61,5 +61,16 @@ final class MetaToolContractTest extends TestCase
             self::assertArrayHasKey($field, $dataSchema['properties']);
         }
         self::assertFalse($dataSchema['additionalProperties']);
+        self::assertSame('idempotencyKey', $parameters[5]->getName());
+        self::assertFalse(array_key_exists('idempotencyKey', $dataSchema['properties']));
+    }
+
+    public function testManageMetaPassesTopLevelIdempotencyKeyToUpsertService(): void
+    {
+        $source = file_get_contents((new \ReflectionClass(ManageMetaTool::class))->getFileName());
+
+        self::assertIsString($source);
+        self::assertStringContainsString('use ($action, $id, $data, $confirm, $idempotencyKey)', $source);
+        self::assertStringContainsString('manage($action, $id, $data, $confirm, $idempotencyKey)', $source);
     }
 }
