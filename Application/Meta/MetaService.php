@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MauticPlugin\MauticMcpBundle\Application\Meta;
 
+use Doctrine\ORM\EntityManagerInterface;
 use Mautic\CoreBundle\Security\Permissions\CorePermissions;
 use Mautic\LeadBundle\Entity\Lead;
 use Mautic\LeadBundle\Model\LeadModel;
@@ -13,6 +14,7 @@ use MauticPlugin\MauticMetaBundle\Application\Connection\ConnectionManager;
 use MauticPlugin\MauticMetaBundle\Application\Contact\IdentityManager;
 use MauticPlugin\MauticMetaBundle\Application\Instagram\InstagramService;
 use MauticPlugin\MauticMetaBundle\Application\Queue\OutboundQueue;
+use MauticPlugin\MauticMetaBundle\Application\WhatsApp\PhoneNormalizer;
 use MauticPlugin\MauticMetaBundle\Application\WhatsApp\WhatsAppTemplateManager;
 use MauticPlugin\MauticMetaBundle\Domain\AssetType;
 use MauticPlugin\MauticMetaBundle\Domain\ConsentStatus;
@@ -26,6 +28,8 @@ use MauticPlugin\MauticMetaBundle\Entity\MetaMessage;
 use MauticPlugin\MauticMetaBundle\Entity\MetaMessageRepository;
 use MauticPlugin\MauticMetaBundle\Entity\MetaOutboundJob;
 use MauticPlugin\MauticMetaBundle\Entity\MetaOutboundJobRepository;
+use MauticPlugin\MauticMetaBundle\Entity\MetaWhatsAppConsent;
+use MauticPlugin\MauticMetaBundle\Entity\MetaWhatsAppConsentRepository;
 use MauticPlugin\MauticMetaBundle\Entity\WhatsAppTemplate;
 use MauticPlugin\MauticMetaBundle\Entity\WhatsAppTemplateRepository;
 use MauticPlugin\MauticMetaBundle\Infrastructure\MetaGraphApiException;
@@ -51,6 +55,9 @@ final class MetaService
         private AssetManager $assetManager,
         private InstagramService $instagram,
         private LeadModel $leads,
+        private EntityManagerInterface $entityManager,
+        private MetaWhatsAppConsentRepository $consents,
+        private PhoneNormalizer $phoneNormalizer,
     ) {
     }
 
@@ -131,7 +138,7 @@ final class MetaService
     /**
      * @param array<string, mixed> $data
      */
-    public function manage(string $action, ?int $id, array $data, bool $confirm): array
+    public function manage(string $action, ?int $id, array $data, bool $confirm, ?string $idempotencyKey = null): array
     {
         return match ($action) {
             'create_template' => $this->createTemplate($data),
@@ -140,6 +147,7 @@ final class MetaService
             'sync_templates' => $this->syncTemplates($id),
             'set_consent' => $this->setConsent($id, $data),
             'link_identity' => $this->linkIdentity($id, $data),
+            'upsert_identity' => $this->upsertIdentity($data, $confirm, $idempotencyKey),
             'test_connection' => $this->testConnection($id, $confirm),
             'create_connection' => $this->createConnection($data),
             'update_connection' => $this->updateConnection($id, $data),
@@ -245,6 +253,98 @@ final class MetaService
         $this->identityManager->associate($identity, $contact);
 
         return ['status' => 'updated', 'identity' => $this->normalizeIdentity($identity)];
+    }
+
+    private function upsertIdentity(array $data, bool $confirm, ?string $idempotencyKey): array
+    {
+        if (!$confirm) {
+            throw new BadRequestHttpException('upsert_identity requires confirm=true.');
+        }
+        $this->assertPermission('edit', 'messages');
+        foreach (['contactId', 'assetId', 'channel', 'externalId', 'phoneNumber'] as $field) {
+            if (!isset($data[$field]) || '' === trim((string) $data[$field])) {
+                throw new BadRequestHttpException('data.'.$field.' is required.');
+            }
+        }
+        if ('' === trim((string) $idempotencyKey)) {
+            throw new BadRequestHttpException('idempotencyKey is required for upsert_identity.');
+        }
+
+        $contact = $this->contact((int) $data['contactId']);
+        $asset = $this->asset((int) $data['assetId']);
+        $channel = strtolower(trim((string) $data['channel']));
+        $expectedType = match ($channel) {
+            'whatsapp' => AssetType::WhatsAppPhoneNumber,
+            'instagram' => AssetType::InstagramAccount,
+            default => throw new BadRequestHttpException('data.channel must be whatsapp or instagram.'),
+        };
+        if ($asset->getType() !== $expectedType) {
+            throw new BadRequestHttpException('data.assetId does not belong to the requested channel.');
+        }
+
+        $externalId = trim((string) $data['externalId']);
+        $phoneNumber = trim((string) $data['phoneNumber']);
+        if ('whatsapp' === $channel) {
+            if (!preg_match('/^[0-9]{8,15}$/', $externalId)) {
+                throw new BadRequestHttpException('data.externalId must contain 8 to 15 digits only.');
+            }
+            $normalized = $this->phoneNormalizer->normalize($phoneNumber, (string) ($asset->getSettings()['trusted_import_default_region'] ?? 'BR'));
+            if ($externalId !== $normalized || '+'.$normalized !== $phoneNumber) {
+                throw new BadRequestHttpException('data.externalId and data.phoneNumber must identify the same E.164 number.');
+            }
+        }
+
+        $status = ConsentStatus::tryFrom((string) ($data['consentStatus'] ?? 'unknown'));
+        if (!$status instanceof ConsentStatus) {
+            throw new BadRequestHttpException('data.consentStatus must be unknown, opted_in, or opted_out.');
+        }
+        try {
+            $consentedAt = isset($data['consentedAt']) ? new \DateTimeImmutable((string) $data['consentedAt']) : new \DateTimeImmutable();
+        } catch (\Exception) {
+            throw new BadRequestHttpException('data.consentedAt must be a valid ISO 8601 date-time.');
+        }
+        $source = trim((string) ($data['consentSource'] ?? 'mcp'));
+
+        $byExternalId = $this->identities->findForAssetAndExternalId($asset, $externalId);
+        if ($byExternalId instanceof MetaContactIdentity && $byExternalId->getContact()?->getId() !== $contact?->getId()) {
+            return ['status' => 'conflict', 'error' => ['field' => 'data.externalId', 'type' => 'identity_conflict', 'message' => 'The externalId is already linked to another Mautic contact.']];
+        }
+        $identity = $this->identities->findOneBy(['asset' => $asset, 'contact' => $contact]);
+        if ($identity instanceof MetaContactIdentity && $identity->getExternalId() !== $externalId) {
+            return ['status' => 'conflict', 'error' => ['field' => 'data.externalId', 'type' => 'contact_identity_conflict', 'message' => 'This contact already has a different identity for the selected asset and channel.']];
+        }
+        if ($identity?->getOptedOutAt() instanceof \DateTimeInterface && ConsentStatus::OptedIn === $status && $identity->getOptedOutAt() >= $consentedAt) {
+            return ['status' => 'conflict', 'error' => ['field' => 'data.consentedAt', 'type' => 'later_opt_out', 'message' => 'A later WhatsApp opt-out remains in force.']];
+        }
+
+        $created = !$identity instanceof MetaContactIdentity;
+        $identity ??= (new MetaContactIdentity())->setAsset($asset)->setExternalId($externalId);
+        $submissionId = 'mcp-upsert-'.hash('sha256', (string) $idempotencyKey);
+
+        return $this->entityManager->wrapInTransaction(function () use ($identity, $created, $contact, $asset, $externalId, $phoneNumber, $channel, $status, $source, $consentedAt, $submissionId): array {
+            $identity->setContact($contact)->setExternalId($externalId);
+            if ('whatsapp' === $channel) {
+                $identity->setPhoneNumber($phoneNumber);
+            }
+            if (ConsentStatus::OptedOut === $status) {
+                $identity->setConsentStatus($status)->setConsentSource($source)->setOptedOutAt($consentedAt);
+            } else {
+                $identity->setConsentStatus($status)->setConsentSource($source)->setConsentedAt(ConsentStatus::OptedIn === $status ? $consentedAt : null);
+            }
+            $this->entityManager->persist($identity);
+            $this->entityManager->flush();
+
+            if ('whatsapp' === $channel && ConsentStatus::OptedIn === $status) {
+                $audit = $this->consents->findSubmission($asset, $submissionId) ?? (new MetaWhatsAppConsent())->setAsset($asset)->setIdentity($identity)->setContact($contact)->setExternalSubmissionId($submissionId);
+                $audit->setIdentity($identity)->setPhoneNumber($phoneNumber)->setConsentAt($consentedAt)
+                    ->setEvidenceHash(hash('sha256', $submissionId.':'.$externalId.':'.$source))
+                    ->setStatus('accepted')->setTrustedAttestation($source, 'mcp_manual_authorization')->setAttestedAt($consentedAt)->setScope('mcp_upsert_identity');
+                $this->entityManager->persist($audit);
+            }
+            $this->entityManager->flush();
+
+            return ['status' => $created ? 'created' : 'updated', 'identity' => $this->normalizeIdentity($identity), 'replayed' => false];
+        });
     }
 
     private function testConnection(?int $id, bool $confirm): array
@@ -443,7 +543,13 @@ final class MetaService
 
     private function normalizeIdentity(MetaContactIdentity $item): array
     {
-        return ['id' => $item->getId(), 'assetId' => $item->getAsset()->getId(), 'contactId' => $item->getContact()?->getId(), 'externalId' => $item->getExternalId(), 'username' => $item->getUsername(), 'phoneNumber' => $item->getPhoneNumber(), 'consentStatus' => $item->getConsentStatus()->value, 'consentSource' => $item->getConsentSource(), 'consentedAt' => $item->getConsentedAt()?->format(DATE_ATOM), 'optedOutAt' => $item->getOptedOutAt()?->format(DATE_ATOM), 'lastInteractionAt' => $item->getLastInteractionAt()?->format(DATE_ATOM)];
+        $channel = match ($item->getAsset()->getType()) {
+            AssetType::WhatsAppPhoneNumber => 'whatsapp',
+            AssetType::InstagramAccount => 'instagram',
+            default => $item->getAsset()->getType()->value,
+        };
+
+        return ['id' => $item->getId(), 'assetId' => $item->getAsset()->getId(), 'contactId' => $item->getContact()?->getId(), 'channel' => $channel, 'externalId' => $item->getExternalId(), 'username' => $item->getUsername(), 'phoneNumber' => $item->getPhoneNumber(), 'consentStatus' => $item->getConsentStatus()->value, 'consentSource' => $item->getConsentSource(), 'consentedAt' => $item->getConsentedAt()?->format(DATE_ATOM), 'optedOutAt' => $item->getOptedOutAt()?->format(DATE_ATOM), 'lastInteractionAt' => $item->getLastInteractionAt()?->format(DATE_ATOM)];
     }
 
     private function normalizeMessage(MetaMessage $item): array

@@ -16,6 +16,7 @@ use MauticPlugin\MauticMcpBundle\Mcp\Tool\Meta\RegisterLandingWhatsAppOptInTool;
 use MauticPlugin\MauticMcpBundle\Mcp\Tool\Meta\SendMetaMessageTool;
 use MauticPlugin\MauticMcpBundle\Mcp\Tool\Meta\StartWhatsAppConsentSyncTool;
 use Mcp\Capability\Attribute\McpTool;
+use Mcp\Capability\Attribute\Schema;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
@@ -46,5 +47,19 @@ final class MetaToolContractTest extends TestCase
         yield [GetWhatsAppConsentSyncStatusTool::class, 'get_whatsapp_consent_sync_status'];
         yield [ListWhatsAppConsentSyncRejectionsTool::class, 'list_whatsapp_consent_sync_rejections'];
         yield [CancelWhatsAppConsentSyncTool::class, 'cancel_whatsapp_consent_sync'];
+    }
+
+    public function testManageMetaPublishesExplicitIdentityUpsertFields(): void
+    {
+        $method = new \ReflectionMethod(ManageMetaTool::class, '__invoke');
+        $parameters = $method->getParameters();
+        $actionSchema = $parameters[0]->getAttributes(Schema::class)[0]->getArguments();
+        self::assertContains('upsert_identity', $actionSchema['enum']);
+
+        $dataSchema = $parameters[2]->getAttributes(Schema::class)[0]->getArguments();
+        foreach (['contactId', 'assetId', 'channel', 'externalId', 'phoneNumber', 'consentStatus', 'consentSource', 'consentedAt'] as $field) {
+            self::assertArrayHasKey($field, $dataSchema['properties']);
+        }
+        self::assertFalse($dataSchema['additionalProperties']);
     }
 }

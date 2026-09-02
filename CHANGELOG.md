@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.13.0 - 2026-09-02
+
+- Add explicit `upsert_identity` creation/update semantics to `mautic_manage_meta`.
+- Publish typed identity fields and preserve `link_identity` for existing Meta Identity IDs only.
+- Validate channel/asset and E.164 consistency, return structured conflicts, preserve later opt-outs, and atomically persist identity plus WhatsApp consent audit.
+
 ## 0.12.0 - 2026-09-02
 
 - Add `register_landing_whatsapp_opt_in` for strict single and batch consent registration with dry-run and idempotency.
