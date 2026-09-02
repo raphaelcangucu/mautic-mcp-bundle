@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.13.2 - 2026-09-02
+
+- Reactivate an archived Meta identity when an explicit MCP identity upsert restores it.
+
 ## 0.13.1 - 2026-09-02
 
 - Pass the top-level `idempotencyKey` through the management closure to `upsert_identity`; the key remains forbidden inside `data`.

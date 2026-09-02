@@ -322,7 +322,7 @@ final class MetaService
         $submissionId = 'mcp-upsert-'.hash('sha256', (string) $idempotencyKey);
 
         return $this->entityManager->wrapInTransaction(function () use ($identity, $created, $contact, $asset, $externalId, $phoneNumber, $channel, $status, $source, $consentedAt, $submissionId): array {
-            $identity->setContact($contact)->setExternalId($externalId);
+            $identity->setContact($contact)->setExternalId($externalId)->setArchivedAt(null);
             if ('whatsapp' === $channel) {
                 $identity->setPhoneNumber($phoneNumber);
             }
