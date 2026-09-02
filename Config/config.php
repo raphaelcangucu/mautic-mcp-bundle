@@ -3,7 +3,7 @@
 return [
     'name'        => 'Mautic MCP Bundle',
     'description' => 'Full MCP tools for Mautic automation, analytics, CRM, tags, forms, and webhooks.',
-    'version'     => '0.11.0',
+    'version'     => '0.11.1',
     'author'      => 'Rahul Shinde',
     'routes'      => [
         'main' => [

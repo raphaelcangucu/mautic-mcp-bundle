@@ -28,6 +28,7 @@ use MauticPlugin\MauticMetaBundle\Entity\MetaOutboundJob;
 use MauticPlugin\MauticMetaBundle\Entity\MetaOutboundJobRepository;
 use MauticPlugin\MauticMetaBundle\Entity\WhatsAppTemplate;
 use MauticPlugin\MauticMetaBundle\Entity\WhatsAppTemplateRepository;
+use MauticPlugin\MauticMetaBundle\Infrastructure\MetaGraphApiException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
@@ -161,17 +162,26 @@ final class MetaService
     {
         $this->assertPermission('view', 'instagram_insights' === $action ? 'analytics' : 'messages');
         $asset = $this->asset($assetId);
-        $result = match ($action) {
-            'instagram_profile' => $this->instagram->profile($asset),
-            'instagram_media' => $this->instagram->media($asset, $limit, $after),
-            'instagram_comments' => $this->instagram->comments($asset, $this->requiredResourceId($resourceId, 'media'), $limit, $after),
-            'instagram_insights' => $this->instagram->insights($asset, $this->requiredResourceId($resourceId, 'media'), $metrics),
-            'instagram_conversations' => $this->instagram->conversations($asset, $limit, $after),
-            'instagram_conversation_messages' => $this->instagram->conversationMessages($asset, $this->requiredResourceId($resourceId, 'conversation')),
-            default => throw new BadRequestHttpException('Unsupported Meta API read action.'),
-        };
+        try {
+            $result = match ($action) {
+                'instagram_profile' => $this->instagram->profile($asset),
+                'instagram_media' => $this->instagram->media($asset, $limit, $after),
+                'instagram_comments' => $this->instagram->comments($asset, $this->requiredResourceId($resourceId, 'media'), $limit, $after),
+                'instagram_insights' => $this->instagram->insights($asset, $this->requiredResourceId($resourceId, 'media'), $metrics),
+                'instagram_conversations' => $this->instagram->conversations($asset, $limit, $after),
+                'instagram_conversation_messages' => $this->instagram->conversationMessages($asset, $this->requiredResourceId($resourceId, 'conversation')),
+                default => throw new BadRequestHttpException('Unsupported Meta API read action.'),
+            };
+        } catch (MetaGraphApiException $exception) {
+            return [
+                'action'  => $action,
+                'assetId' => $assetId,
+                'ok'      => false,
+                'error'   => $exception->details(),
+            ];
+        }
 
-        return ['action' => $action, 'assetId' => $assetId, 'data' => $result];
+        return ['action' => $action, 'assetId' => $assetId, 'ok' => true, 'data' => $result];
     }
 
     private function createTemplate(array $data): array

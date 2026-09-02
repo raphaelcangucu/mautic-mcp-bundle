@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.11.1 - 2026-09-02
+
+- Return the original structured Graph API error from live Instagram reads.
+- Expose strict connection diagnostics for required Instagram permissions and assigned profiles.
+
 ## 0.11.0 - 2026-09-02
 
 - Add omnichannel webhook adapter configuration to Meta connection create/update operations.
