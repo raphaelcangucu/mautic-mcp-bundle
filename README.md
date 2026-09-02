@@ -55,7 +55,7 @@ Restart Codex and ask it to run `mautic_health`.
 
 ## Capabilities
 
-The server currently publishes 32 tools, split into dedicated read and write operations:
+The server publishes dedicated read and write operations, including evidence-only WhatsApp consent workflows:
 
 - contacts, timelines, deduplication, merge, points, stages, companies, fields, and tags;
 - segments and contact membership;
@@ -69,6 +69,8 @@ The server currently publishes 32 tools, split into dedicated read and write ope
 - optional official Meta integration through `MauticMetaBundle`: connection/asset CRUD, WhatsApp templates, identities, message logs, durable queues, WhatsApp text/template/media/interactive delivery, Instagram replies/DMs and live reads, consent management, and diagnostics.
 
 The Meta tools are `mautic_meta_setup`, `mautic_read_meta`, `mautic_read_meta_api`, `mautic_send_meta_message`, and `mautic_manage_meta`. Install and enable `raphaelcangucu/mautic-meta-bundle` on the same Mautic instance to use them.
+
+Consent tools are `register_landing_whatsapp_opt_in`, `preview_whatsapp_consent_sync`, `start_whatsapp_consent_sync`, `get_whatsapp_consent_sync_status`, `list_whatsapp_consent_sync_rejections`, and `cancel_whatsapp_consent_sync`. Writes require `confirm=true` and `idempotencyKey`; preview is strictly read-only and synchronization never sends messages.
 
 Start Meta configuration with:
 

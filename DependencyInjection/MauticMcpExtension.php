@@ -20,7 +20,7 @@ class MauticMcpExtension extends Extension implements PrependExtensionInterface
 
         $container->prependExtensionConfig('mcp', [
             'app'               => 'mautic',
-            'version'           => '0.10.0',
+            'version'           => '0.12.0',
             'description'       => 'Full Mautic automation MCP server',
             'instructions'      => 'Operate Mautic automation, analytics, CRM, forms, webhooks, WhatsApp, and Instagram. Prefer read tools and previews; write, send, merge, delete, and external operations require approval.',
             'discovery'         => [

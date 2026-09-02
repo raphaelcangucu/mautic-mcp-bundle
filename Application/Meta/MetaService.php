@@ -261,7 +261,7 @@ final class MetaService
     private function createConnection(array $data): array
     {
         $this->assertPermission('create', 'connections');
-        $connection = $this->connectionManager->create((string) ($data['name'] ?? ''), (string) ($data['app_id'] ?? ''), (string) ($data['app_secret'] ?? ''), (string) ($data['access_token'] ?? ''), (string) ($data['verify_token'] ?? ''), (string) ($data['graph_version'] ?? 'v26.0'), (string) ($data['webhook_adapters_json'] ?? ''));
+        $connection = $this->connectionManager->create((string) ($data['name'] ?? ''), (string) ($data['app_id'] ?? ''), (string) ($data['app_secret'] ?? ''), (string) ($data['access_token'] ?? ''), (string) ($data['verify_token'] ?? ''), (string) ($data['graph_version'] ?? 'v26.0'), (string) ($data['webhook_adapters_json'] ?? ''), (string) ($data['consent_source_url'] ?? ''), (string) ($data['consent_source_secret'] ?? ''));
 
         return ['status' => 'created', 'connection' => $this->normalizeConnection($connection)];
     }

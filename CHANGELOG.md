@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.12.0 - 2026-09-02
+
+- Add `register_landing_whatsapp_opt_in` for strict single and batch consent registration with dry-run and idempotency.
+- Add preview/start/status/rejections/cancel tools for historical WhatsApp consent synchronization.
+- Publish explicit Meta management data properties and structured identity/consent errors.
+
 ## 0.11.2 - 2026-09-02
 
 - Use canonical Instagram Graph IDs resolved from linked Pages or Business Manager asset metadata.
