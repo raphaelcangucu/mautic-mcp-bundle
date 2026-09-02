@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.14.3 - 2026-09-02
+
+- Apply recursive secret redaction to every Meta read resource while retaining harmless token-expiry metadata.
+
 ## 0.14.2 - 2026-09-02
 
 - Report MetaBundle 0.10.2, including signed-callback subscription diagnostics.

@@ -85,13 +85,13 @@ final class MetaService
                 throw new NotFoundHttpException(sprintf('%s %d was not found.', $resource, $id));
             }
 
-            return ['resource' => $resource, 'item' => $normalizer($entity)];
+            return $this->redactSecrets(['resource' => $resource, 'item' => $normalizer($entity)]);
         }
         $total = $repository->count([]);
         $items = array_map($normalizer, $repository->findBy([], ['id' => 'DESC'], $limit, $offset));
         $hasMore = $offset + count($items) < $total;
 
-        return ['resource' => $resource, 'page' => $page, 'limit' => $limit, 'count' => count($items), 'total' => $total, 'hasMore' => $hasMore, 'nextPage' => $hasMore ? $page + 1 : null, 'items' => $items];
+        return $this->redactSecrets(['resource' => $resource, 'page' => $page, 'limit' => $limit, 'count' => count($items), 'total' => $total, 'hasMore' => $hasMore, 'nextPage' => $hasMore ? $page + 1 : null, 'items' => $items]);
     }
 
     /**
@@ -534,7 +534,7 @@ final class MetaService
     private function redactSecrets(array $data): array
     {
         foreach ($data as $key => $value) {
-            if (preg_match('/(?:token|secret|password|authorization)/i', (string) $key)) {
+            if (preg_match('/^(?:access_?token|verify_?token|app_?secret|consent_source_secret|password|authorization|sealed_secret)$/i', (string) $key)) {
                 $data[$key] = '[REDACTED]';
             } elseif (is_array($value)) {
                 $data[$key] = $this->redactSecrets($value);
