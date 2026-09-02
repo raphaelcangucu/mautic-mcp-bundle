@@ -36,7 +36,7 @@ final class MetaSetupService
         $sections = $this->sections($connectionId);
 
         return [
-            'plugin' => ['name' => 'Mautic Meta Bundle', 'version' => '0.10.1', 'package' => 'raphaelcangucu/mautic-meta-bundle'],
+            'plugin' => ['name' => 'Mautic Meta Bundle', 'version' => '0.10.2', 'package' => 'raphaelcangucu/mautic-meta-bundle'],
             'section' => $section,
             'availableSections' => $available,
             'status' => $this->status(),

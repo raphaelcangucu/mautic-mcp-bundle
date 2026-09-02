@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.14.2 - 2026-09-02
+
+- Report MetaBundle 0.10.2, including signed-callback subscription diagnostics.
+
 ## 0.14.1 - 2026-09-02
 
 - Report the deployed MetaBundle 0.10.1 version from setup.
