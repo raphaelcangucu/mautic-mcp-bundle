@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.11.0 - 2026-09-02
+
+- Add omnichannel webhook adapter configuration to Meta connection create/update operations.
+- Redact encrypted adapter secrets from MCP read responses while reporting whether a secret is configured.
+
 ## 0.10.0 - 2026-09-01
 
 - Add `mautic_meta_setup`, a read-only configuration assistant for the optional official Meta bundle.

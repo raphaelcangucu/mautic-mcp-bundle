@@ -19,7 +19,8 @@ final class MetaSetupService
         private MetaConnectionRepository $connections,
         private MetaAssetRepository $assets,
         private UrlGeneratorInterface $urls
-    ) {}
+    ) {
+    }
 
     /**
      * @return array<string, mixed>
@@ -59,11 +60,18 @@ final class MetaSetupService
         $activeConnections = array_filter($connections, static fn (MetaConnection $connection): bool => 'active' === $connection->getStatus() && $connection->isPublished());
         $activeAssets = array_filter($assets, static fn (MetaAsset $asset): bool => 'active' === $asset->getStatus() && $asset->isPublished() && 'active' === $asset->getConnection()->getStatus() && $asset->getConnection()->isPublished());
         $assetCounts = array_fill_keys(array_map(static fn (AssetType $type): string => $type->value, AssetType::cases()), 0);
-        foreach ($assets as $asset) { ++$assetCounts[$asset->getType()->value]; }
+        foreach ($assets as $asset) {
+            ++$assetCounts[$asset->getType()->value];
+        }
         $issues = [];
-        if ([] === $connections) { $issues[] = 'No Meta connection exists. Create one before adding assets.'; }
-        elseif ([] === $activeConnections) { $issues[] = 'No connection is active. Run test_connection after saving valid credentials.'; }
-        if (0 === $assetCounts[AssetType::WhatsAppPhoneNumber->value] && 0 === $assetCounts[AssetType::InstagramAccount->value]) { $issues[] = 'No sending asset exists. Add a WhatsApp phone number or Instagram professional account.'; }
+        if ([] === $connections) {
+            $issues[] = 'No Meta connection exists. Create one before adding assets.';
+        } elseif ([] === $activeConnections) {
+            $issues[] = 'No connection is active. Run test_connection after saving valid credentials.';
+        }
+        if (0 === $assetCounts[AssetType::WhatsAppPhoneNumber->value] && 0 === $assetCounts[AssetType::InstagramAccount->value]) {
+            $issues[] = 'No sending asset exists. Add a WhatsApp phone number or Instagram professional account.';
+        }
 
         return [
             'configured' => [] !== $connections && [] !== $activeConnections && [] !== $activeAssets,
@@ -120,6 +128,7 @@ final class MetaSetupService
                     'name' => 'Internal label.', 'app_id' => 'Meta App ID.', 'app_secret' => 'Meta App Secret; encrypted at rest.',
                     'access_token' => 'Prefer a non-human System User token; encrypted at rest.', 'verify_token' => 'A random value you choose and also enter in Meta webhook configuration.',
                     'graph_version' => 'Version in vNN.N format. Review it during Meta API upgrades.',
+                    'webhook_adapters_json' => 'Optional JSON array of signed omnichannel webhook destinations. Adapter names must be unique.',
                 ],
                 'mcp' => [
                     'create' => ['tool' => 'mautic_manage_meta', 'action' => 'create_connection', 'dataRequired' => ['name', 'app_id', 'app_secret', 'access_token', 'verify_token'], 'supports' => ['dryRun', 'idempotencyKey']],
@@ -127,6 +136,18 @@ final class MetaSetupService
                     'test' => ['tool' => 'mautic_manage_meta', 'action' => 'test_connection', 'id' => 'connection ID', 'confirm' => true],
                     'read' => ['tool' => 'mautic_read_meta', 'resource' => 'connections'],
                 ],
+            ],
+            'omnichannelAdapters' => [
+                'configurationField' => 'webhook_adapters_json',
+                'multipleDestinations' => true,
+                'fields' => ['name', 'url', 'secret', 'enabled', 'allowReplies', 'events', 'channels', 'timeout', 'maxAttempts'],
+                'events' => ['message.received', 'message.sent', 'message.delivered', 'message.read', 'message.failed'],
+                'channels' => ['whatsapp', 'instagram'],
+                'replyUrl' => '/meta/adapters/{connectionId}/{urlEncodedAdapterName}/messages',
+                'replyBody' => ['conversationId' => 'integer', 'text' => 'non-empty string', 'idempotencyKey' => 'unique string'],
+                'signature' => 'sha256=HMAC_SHA256(timestamp + "." + rawBody, secret)',
+                'headers' => ['X-Mautic-Meta-Timestamp', 'X-Mautic-Meta-Signature'],
+                'note' => 'Use secret="***" on updates to preserve the encrypted secret already stored in Mautic.',
             ],
             'assets' => [
                 'types' => [
@@ -219,6 +240,10 @@ final class MetaSetupService
 
     private function route(string $name): string
     {
-        try { return $this->urls->generate($name, [], UrlGeneratorInterface::ABSOLUTE_URL); } catch (\Throwable) { return 'Route unavailable: '.$name; }
+        try {
+            return $this->urls->generate($name, [], UrlGeneratorInterface::ABSOLUTE_URL);
+        } catch (\Throwable) {
+            return 'Route unavailable: '.$name;
+        }
     }
 }
