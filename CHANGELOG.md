@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.14.0 - 2026-09-02
+
+- Recursively redact tokens, secrets, passwords, and authorization values from all Meta connection reads.
+- Report the current MetaBundle version in setup and expose the expanded WhatsApp diagnostics safely.
+
 ## 0.13.2 - 2026-09-02
 
 - Reactivate an archived Meta identity when an explicit MCP identity upsert restores it.

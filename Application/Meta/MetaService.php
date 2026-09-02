@@ -510,7 +510,7 @@ final class MetaService
 
     private function normalizeConnection(MetaConnection $item): array
     {
-        $settings = $item->getSettings();
+        $settings = $this->redactSecrets($item->getSettings());
         if (is_array($settings['webhook_adapters'] ?? null)) {
             $settings['webhook_adapters'] = array_map(static function (array $adapter): array {
                 unset($adapter['sealed_secret']);
@@ -529,6 +529,19 @@ final class MetaService
             'tokenExpiresAt' => $item->getTokenExpiresAt()?->format(DATE_ATOM),
             'settings'       => $settings,
         ];
+    }
+
+    private function redactSecrets(array $data): array
+    {
+        foreach ($data as $key => $value) {
+            if (preg_match('/(?:token|secret|password|authorization)/i', (string) $key)) {
+                $data[$key] = '[REDACTED]';
+            } elseif (is_array($value)) {
+                $data[$key] = $this->redactSecrets($value);
+            }
+        }
+
+        return $data;
     }
 
     private function normalizeAsset(MetaAsset $item): array
