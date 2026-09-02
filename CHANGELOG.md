@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.11.2 - 2026-09-02
+
+- Use canonical Instagram Graph IDs resolved from linked Pages or Business Manager asset metadata.
+- Remove the unsupported Instagram profile `user_id` field.
+
 ## 0.11.1 - 2026-09-02
 
 - Return the original structured Graph API error from live Instagram reads.
