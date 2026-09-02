@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.14.1 - 2026-09-02
+
+- Report the deployed MetaBundle 0.10.1 version from setup.
+
 ## 0.14.0 - 2026-09-02
 
 - Recursively redact tokens, secrets, passwords, and authorization values from all Meta connection reads.
