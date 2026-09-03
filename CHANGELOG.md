@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.14.5 - 2026-09-03
+
+- Report MetaBundle 0.10.3 with secure WhatsApp phone registration support.
+
 ## 0.14.4 - 2026-09-03
 
 - Accept opaque Meta asset and phone-number IDs longer than the E.164 limit while retaining strict E.164 validation for actual recipient phone numbers.
