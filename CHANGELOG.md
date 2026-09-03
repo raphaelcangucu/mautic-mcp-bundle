@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.14.6 - 2026-09-03
+
+- Report MetaBundle 0.10.4 with canonical WhatsApp `wa_id` service-window matching.
+
 ## 0.14.5 - 2026-09-03
 
 - Report MetaBundle 0.10.3 with secure WhatsApp phone registration support.
