@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.14.4 - 2026-09-03
+
+- Accept opaque Meta asset and phone-number IDs longer than the E.164 limit while retaining strict E.164 validation for actual recipient phone numbers.
+
 ## 0.14.3 - 2026-09-02
 
 - Apply recursive secret redaction to every Meta read resource while retaining harmless token-expiry metadata.
