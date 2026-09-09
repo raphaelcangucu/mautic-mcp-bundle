@@ -56,12 +56,15 @@ Prefer dedicated read tools before mutations. Use previews and `dryRun` whenever
 - `mautic_manage_emails`, including `clone`, `create_ab_test`, and confirmed `send_test`
 - `mautic_manage_email_templates` for reusable template CRUD and HTML/preview/lock changes
 - `mautic_manage_crm`
+- `mautic_manage_forms` for partial form/field/action CRUD and publish control
 - `mautic_manage_webhooks`
 - `mautic_manage_tags`, including tag creation and contact assignment/removal
 - `mautic_send_meta_message` for queued WhatsApp and Instagram delivery
 - `mautic_manage_meta` for Meta connection/asset/template administration and consent
 
 `mautic_write_campaign_flow` can replace the complete graph (including replacing it with an empty graph) or remove specific persisted event IDs. `delete_events` rejects parent deletion when children remain unless `cascade=true`. Read the current graph first, perform a `dryRun`, and only then execute with confirmation.
+
+Before changing a form, call `mautic_read_forms` with `action=get` and reuse its `form.dateModified` as `expectedDateModified`. In `mautic_manage_forms`, nested fields/actions with IDs are updated, entries without IDs are created, and omitted entries remain unchanged. Removing nested entries through `deleteFieldIds` or `deleteActionIds`, and deleting the complete form, requires `confirm=true`.
 
 For email A/B tests, call `mautic_manage_emails` with `action=create_ab_test`, the parent email ID, and `data.variants`. Configure `winnerCriteria`, `sendWinnerDelay`, and `totalWeight` in `data`. Use `send_test` with `data.recipients` to send a non-statistical sample before publishing.
 

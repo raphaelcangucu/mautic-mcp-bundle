@@ -18,7 +18,7 @@ final class ReadFormsTool extends AbstractMcpTool
     ) {}
 
     /**
-     * Read forms with fields/actions, or list submissions globally, by form, or by contact.
+     * Read complete forms with editable fields/actions and dateModified, or list submissions by form/contact.
      */
     #[McpTool(name: 'mautic_read_forms', annotations: new ToolAnnotations(readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false), outputSchema: \MauticPlugin\MauticMcpBundle\OutputSchemas::OBJECT)]
     public function __invoke(#[Schema(enum: ['list', 'get', 'submissions', 'contact_submissions'])] string $action = 'list', ?int $formId = null, ?int $contactId = null, int $page = 1, int $limit = 50): array

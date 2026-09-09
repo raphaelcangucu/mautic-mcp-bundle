@@ -64,7 +64,7 @@ The server publishes dedicated read and write operations, including evidence-onl
 - dedicated `mautic_read_email_html` retrieval with an explicit HTML output schema for safe read-modify-write workflows;
 - reusable email-template creation, HTML editing, preview control, and deletion;
 - campaign and email analytics;
-- forms and submissions;
+- forms and submissions, including safe form/field/submit-action CRUD through `mautic_manage_forms`;
 - webhooks and cursor-based incremental events.
 - optional official Meta integration through `MauticMetaBundle`: connection/asset CRUD, WhatsApp templates, identities, message logs, durable queues, WhatsApp text/template/media/interactive delivery, Instagram replies/DMs and live reads, consent management, and diagnostics.
 
@@ -83,6 +83,8 @@ Start Meta configuration with:
 using `mautic_meta_setup`. Its sections cover `installation`, `meta_app`, `connections`, `assets`, `webhooks`, `campaigns`, `queue`, `permissions`, `mcp`, and `troubleshooting`. The result includes current readiness checks, safe UI links, and a callback URL for every configured connection without returning tokens or app secrets. Pass `connectionId` with `section=webhooks` to obtain one exact callback URL.
 
 All tools publish MCP annotations and output schemas. Mutations support controls such as `dryRun`, `confirm`, `idempotencyKey`, and optimistic concurrency where applicable.
+
+For form changes, first call `mautic_read_forms` with `action=get` and pass its `form.dateModified` value as `expectedDateModified` to `mautic_manage_forms`. Updates are partial: nested fields/actions with an `id` are updated, those without an `id` are created, and omitted items are retained. Use `data.deleteFieldIds` or `data.deleteActionIds` with `confirm=true` for explicit removal. Deleting a complete form also requires `confirm=true`.
 
 ## Campaign tag action
 

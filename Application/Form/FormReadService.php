@@ -17,7 +17,8 @@ final class FormReadService
     public function __construct(
         private FormModel $formModel,
         private Connection $connection,
-        private CorePermissions $permissions
+        private CorePermissions $permissions,
+        private FormNormalizer $normalizer,
     ) {}
 
     public function read(string $action, ?int $formId, ?int $contactId, int $page, int $limit): array
@@ -49,17 +50,18 @@ final class FormReadService
 
     private function get(?int $formId): array
     {
+        if (null === $formId || $formId < 1) {
+            throw new BadRequestHttpException('formId is required for action=get.');
+        }
         $form = $this->formModel->getEntity($formId);
         if (!$form instanceof Form) {
             throw new NotFoundHttpException('Form was not found.');
         }
-        $fields = $this->connection->fetchAllAssociative('SELECT id, label, alias, type, is_required AS isRequired, field_order AS fieldOrder, lead_field AS leadField, mapped_object AS mappedObject, mapped_field AS mappedField FROM '.MAUTIC_TABLE_PREFIX.'form_fields WHERE form_id = :id ORDER BY field_order, id', ['id' => $formId]);
-        $actions = $this->connection->fetchAllAssociative('SELECT id, name, description, type, action_order AS actionOrder, properties FROM '.MAUTIC_TABLE_PREFIX.'form_actions WHERE form_id = :id ORDER BY action_order, id', ['id' => $formId]);
-        foreach ($actions as &$action) {
-            $action['properties'] = $this->decode((string) $action['properties']);
+        if (!$this->permissions->hasEntityAccess('form:forms:viewown', 'form:forms:viewother', $form->getCreatedBy())) {
+            throw new AccessDeniedException('Permission denied.');
         }
 
-        return ['form' => ['id' => $form->getId(), 'name' => $form->getName(), 'alias' => $form->getAlias(), 'description' => $form->getDescription(), 'submissionCount' => $form->getSubmissionCount()], 'fields' => $fields, 'actions' => $actions];
+        return $this->normalizer->normalize($form);
     }
 
     private function submissions(?int $formId, ?int $contactId, int $page, int $limit): array
@@ -93,20 +95,6 @@ final class FormReadService
         $hasMore = $page * $limit < $total;
 
         return ['page' => $page, 'limit' => $limit, 'count' => count($items), 'total' => $total, 'hasMore' => $hasMore, 'nextPage' => $hasMore ? $page + 1 : null, 'items' => $items];
-    }
-
-    private function decode(string $value): mixed
-    {
-        if ('' === $value) {
-            return [];
-        }
-        $json = json_decode($value, true);
-        if (JSON_ERROR_NONE === json_last_error()) {
-            return $json;
-        }
-        $php = @unserialize($value, ['allowed_classes' => false]);
-
-        return false === $php ? $value : $php;
     }
 
     private function assertRead(): void

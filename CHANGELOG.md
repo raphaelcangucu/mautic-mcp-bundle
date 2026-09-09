@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Add `mautic_manage_forms` for form creation, partial updates, publishing, unpublishing, and confirmed deletion.
+- Support nested field and submit-action creation/update plus explicitly confirmed nested deletion.
+- Return complete editable form state and `dateModified` from `mautic_read_forms` for safe read-modify-write workflows.
+
 ## 0.14.6 - 2026-09-03
 
 - Report MetaBundle 0.10.4 with canonical WhatsApp `wa_id` service-window matching.
