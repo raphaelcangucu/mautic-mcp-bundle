@@ -14,9 +14,15 @@ final class FormNormalizer
     public function normalize(Form $form): array
     {
         $category = $form->getCategory();
-        $fields = array_map($this->normalizeField(...), $form->getFields()->toArray());
+        $fields = array_map(
+            fn (Field $field): array => $this->withJsonObjectMaps($this->normalizeField($field), ['properties', 'validation', 'conditions']),
+            $form->getFields()->toArray(),
+        );
         usort($fields, static fn (array $a, array $b): int => [$a['order'], $a['id']] <=> [$b['order'], $b['id']]);
-        $actions = array_map($this->normalizeAction(...), $form->getActions()->toArray());
+        $actions = array_map(
+            fn (Action $action): array => $this->withJsonObjectMaps($this->normalizeAction($action), ['properties']),
+            $form->getActions()->toArray(),
+        );
         usort($actions, static fn (array $a, array $b): int => [$a['order'], $a['id']] <=> [$b['order'], $b['id']]);
 
         return [
@@ -113,5 +119,22 @@ final class FormNormalizer
         $normalized['actionOrder'] = $normalized['order'];
 
         return $normalized;
+    }
+
+    /**
+     * PHP represents both an empty JSON object and an empty JSON array as []. Ensure map-shaped
+     * values are emitted as {} while keeping raw arrays in the write service's internal payloads.
+     *
+     * @param string[] $keys
+     */
+    private function withJsonObjectMaps(array $data, array $keys): array
+    {
+        foreach ($keys as $key) {
+            if (!isset($data[$key]) || [] === $data[$key]) {
+                $data[$key] = new \stdClass();
+            }
+        }
+
+        return $data;
     }
 }

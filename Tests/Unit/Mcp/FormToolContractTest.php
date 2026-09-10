@@ -8,6 +8,7 @@ use MauticPlugin\MauticMcpBundle\Mcp\Tool\Form\ManageFormsTool;
 use MauticPlugin\MauticMcpBundle\Mcp\Tool\Form\ReadFormsTool;
 use Mcp\Capability\Attribute\McpTool;
 use Mcp\Capability\Attribute\Schema;
+use Mcp\Capability\Discovery\SchemaValidator;
 use PHPUnit\Framework\TestCase;
 
 final class FormToolContractTest extends TestCase
@@ -18,11 +19,13 @@ final class FormToolContractTest extends TestCase
         self::assertCount(1, $attributes);
         self::assertSame('mautic_manage_forms', $attributes[0]->getArguments()['name']);
 
-        $parameters = (new \ReflectionMethod(ManageFormsTool::class, '__invoke'))->getParameters();
-        $actionSchema = $parameters[0]->getAttributes(Schema::class)[0]->getArguments();
-        self::assertSame(['create', 'update', 'delete', 'publish', 'unpublish'], $actionSchema['enum']);
+        $method = new \ReflectionMethod(ManageFormsTool::class, '__invoke');
+        $parameters = $method->getParameters();
+        $inputSchema = $method->getAttributes(Schema::class)[0]->newInstance()->definition;
+        self::assertIsArray($inputSchema);
+        self::assertSame(['create', 'update', 'delete', 'publish', 'unpublish'], $inputSchema['properties']['action']['enum']);
 
-        $dataSchema = $parameters[2]->getAttributes(Schema::class)[0]->getArguments();
+        $dataSchema = $inputSchema['properties']['data']['anyOf'][0];
         foreach (['fields', 'actions', 'deleteFieldIds', 'deleteActionIds'] as $property) {
             self::assertArrayHasKey($property, $dataSchema['properties']);
         }
@@ -33,6 +36,26 @@ final class FormToolContractTest extends TestCase
         self::assertSame('dryRun', $parameters[4]->getName());
         self::assertSame('idempotencyKey', $parameters[5]->getName());
         self::assertSame('expectedDateModified', $parameters[6]->getName());
+    }
+
+    public function testSchemaAcceptsEmptyJsonObjectsDecodedByTheSdk(): void
+    {
+        $method = new \ReflectionMethod(ManageFormsTool::class, '__invoke');
+        $inputSchema = $method->getAttributes(Schema::class)[0]->newInstance()->definition;
+        $arguments = json_decode(<<<'JSON'
+{"action":"create","data":{"name":"MCP form","fields":[{"label":"Message","type":"textarea","properties":{},"validation":{},"conditions":{}}],"actions":[{"type":"lead.changetags","properties":{}}]},"dryRun":true}
+JSON, true, flags: JSON_THROW_ON_ERROR);
+
+        self::assertSame([], (new SchemaValidator())->validateAgainstJsonSchema($arguments, $inputSchema));
+    }
+
+    public function testSchemaAcceptsExplicitlyEmptyDataObject(): void
+    {
+        $method = new \ReflectionMethod(ManageFormsTool::class, '__invoke');
+        $inputSchema = $method->getAttributes(Schema::class)[0]->newInstance()->definition;
+        $arguments = json_decode('{"action":"delete","id":42,"data":{},"confirm":true}', true, flags: JSON_THROW_ON_ERROR);
+
+        self::assertSame([], (new SchemaValidator())->validateAgainstJsonSchema($arguments, $inputSchema));
     }
 
     public function testReadFormsRemainsTheDedicatedReadTool(): void
