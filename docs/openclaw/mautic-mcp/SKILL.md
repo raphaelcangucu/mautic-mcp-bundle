@@ -68,4 +68,6 @@ Before changing a form, call `mautic_read_forms` with `action=get` and reuse its
 
 For email A/B tests, call `mautic_manage_emails` with `action=create_ab_test`, the parent email ID, and `data.variants`. Configure `winnerCriteria`, `sendWinnerDelay`, and `totalWeight` in `data`. Use `send_test` with `data.recipients` to send a non-statistical sample before publishing.
 
+To export contacts from one segment, call `mautic_read_segments` with `action=members` and the segment `id`. Follow `nextPage` while `hasMore=true`. Results are ordered newest-first by contact ID and include top-level phone/mobile values plus all configured contact fields. Segment membership is independent from Meta consent: omit `metaOptedIn` (or use `null`) for every member, `true` for members with an active opted-in Meta identity, or `false` for members without one. When complete identity details are needed, pass that page's contact IDs to `mautic_read_meta` with `resource=identities` and `contactIds`, then join on `contactId`. Treat a missing identity as no recorded consent, never as opt-in. These actions only read data and never send messages.
+
 Analytics uses page-based pagination. Incremental event and webhook-log reads intentionally use `afterId`/`nextCursor` because cursors are stable while new events arrive.

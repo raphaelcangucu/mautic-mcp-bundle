@@ -58,7 +58,7 @@ Restart Codex and ask it to run `mautic_health`.
 The server publishes dedicated read and write operations, including evidence-only WhatsApp consent workflows:
 
 - contacts, timelines, deduplication, merge, points, stages, companies, fields, and tags;
-- segments and contact membership;
+- segments and paginated contact-member export through `mautic_read_segments` with `action=members`, including phone, mobile, and all configured profile fields;
 - campaigns and complete graph editing, including event deletion and `lead.changetags` actions;
 - emails with complete HTML read/write, absolute preview URLs, public-preview and editing-lock controls, safe send preview, test sends, cloning, and A/B variants;
 - dedicated `mautic_read_email_html` retrieval with an explicit HTML output schema for safe read-modify-write workflows;
@@ -73,6 +73,12 @@ The Meta tools are `mautic_meta_setup`, `mautic_read_meta`, `mautic_read_meta_ap
 `mautic_manage_meta` supports `upsert_identity` to create the first Meta identity or update an existing identity by `contactId + assetId + channel`. It requires `confirm=true` and `idempotencyKey`. The legacy `link_identity` action only associates an existing identity and therefore requires `id` to be the Meta Identity ID, not the Mautic contact ID.
 
 Consent tools are `register_landing_whatsapp_opt_in`, `preview_whatsapp_consent_sync`, `start_whatsapp_consent_sync`, `get_whatsapp_consent_sync_status`, `list_whatsapp_consent_sync_rejections`, and `cancel_whatsapp_consent_sync`. Writes require `confirm=true` and `idempotencyKey`; preview is strictly read-only and synchronization never sends messages.
+
+For a segment export with authoritative WhatsApp consent, read a member page and pass its contact IDs to `mautic_read_meta` with `resource=identities` and `contactIds=[...]`. Join on `contactId`; an absent identity means that no Meta consent identity is recorded and must not be interpreted as opt-in.
+
+`contactIds` is intentionally limited to identity-list reads (`resource=identities` without `id`). Omit it when reading messages, queue jobs, templates, assets, or connections. Invalid filters and missing records return a structured MCP result with `status=rejected` and an `error` object (`field`, `type`, and `message`) instead of terminating the HTTP transport with a generic 500 response.
+
+Segment membership is independent from Meta consent by default. On `action=members`, omit `metaOptedIn` (or pass `null`) to export every active segment member. Pass `true` to keep contacts with an active opted-in Meta identity, or `false` to keep contacts without one, including contacts that have no recorded Meta identity.
 
 Start Meta configuration with:
 

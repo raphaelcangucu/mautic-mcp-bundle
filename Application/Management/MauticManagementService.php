@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace MauticPlugin\MauticMcpBundle\Application\Management;
 
+use Doctrine\ORM\EntityManagerInterface;
 use Mautic\CampaignBundle\Entity\Campaign;
 use Mautic\CampaignBundle\Membership\MembershipManager;
 use Mautic\CampaignBundle\Model\CampaignModel;
 use Mautic\CoreBundle\Security\Permissions\CorePermissions;
 use Mautic\EmailBundle\Entity\Email;
 use Mautic\EmailBundle\Model\EmailModel;
+use Mautic\LeadBundle\Controller\ListController;
 use Mautic\LeadBundle\Entity\Lead;
 use Mautic\LeadBundle\Entity\LeadList;
 use Mautic\LeadBundle\Model\LeadModel;
@@ -30,6 +32,7 @@ final class MauticManagementService
         private MembershipManager $membershipManager,
         private CorePermissions $permissions,
         private UrlGeneratorInterface $urlGenerator,
+        private EntityManagerInterface $entityManager,
     ) {
     }
 
@@ -45,11 +48,12 @@ final class MauticManagementService
         };
     }
 
-    public function segments(string $action, ?int $id, array $data, array $contactIds, string $query, int $limit, int $page, bool $confirm, ?string $expectedDateModified = null): array
+    public function segments(string $action, ?int $id, array $data, array $contactIds, string $query, int $limit, int $page, bool $confirm, ?string $expectedDateModified = null, ?bool $metaOptedIn = null): array
     {
         return match ($action) {
             'list'            => $this->listSegments($query, $limit, $page),
             'get'             => $this->segmentResult($this->segment($id), 'fetched'),
+            'members'         => $this->listSegmentMembers($this->segment($id), $query, $limit, $page, $metaOptedIn),
             'create'          => $this->saveSegment($this->listModel->getEntity(), $data, true),
             'update'          => $this->saveSegment($this->segmentForWrite($id, $expectedDateModified), $data, false),
             'delete'          => $this->deleteSegment($this->segmentForWrite($id, $expectedDateModified), $confirm),
@@ -115,6 +119,100 @@ final class MauticManagementService
         $items = $this->listModel->getEntities($this->listArgs('l', $query, $limit, $page));
 
         return $this->page($items, fn (LeadList $segment): array => $this->segmentData($segment), $page, $limit);
+    }
+
+    private function listSegmentMembers(LeadList $segment, string $query, int $limit, int $page, ?bool $metaOptedIn): array
+    {
+        $this->assertGrantedAny(['lead:leads:viewown', 'lead:leads:viewother']);
+        $page  = max(1, $page);
+        $limit = max(1, min(100, $limit));
+
+        $repository = $this->leadModel->getRepository();
+        $args = [
+            'withTotalCount' => true,
+            'start'          => ($page - 1) * $limit,
+            'limit'          => $limit,
+            'filter'         => ['string' => trim($query), 'force' => []],
+            'orderBy'        => 'l.id',
+            'orderByDir'     => 'DESC',
+            'route'          => ListController::ROUTE_SEGMENT_CONTACTS,
+        ];
+        if (null !== $metaOptedIn) {
+            $eligibleContactIds = $this->metaOptedInContactIds((int) $segment->getId(), $metaOptedIn);
+            if ([] === $eligibleContactIds) {
+                $members = ['results' => [], 'count' => 0];
+            } else {
+                $args['ids'] = $eligibleContactIds;
+            }
+        }
+        $members ??= $repository->getEntityContacts(
+            $args,
+            'lead_lists_leads',
+            (int) $segment->getId(),
+            ['manually_removed' => 0],
+            'leadlist_id',
+        );
+
+        $items = [];
+        foreach ($members['results'] ?? [] as $contact) {
+            if ($contact instanceof Lead) {
+                $this->assertEntityPermission('lead:leads', 'view', $contact->getPermissionUser());
+                $items[] = $this->segmentMemberData($contact);
+            }
+        }
+
+        $total   = (int) ($members['count'] ?? count($items));
+        $hasMore = $page * $limit < $total;
+
+        return [
+            'status'         => 'members_fetched',
+            'segment'        => $this->segmentData($segment),
+            'query'          => trim($query),
+            'metaOptedIn'    => $metaOptedIn,
+            'orderBy'        => 'id',
+            'orderDirection' => 'DESC',
+            'page'           => $page,
+            'limit'          => $limit,
+            'count'          => count($items),
+            'total'          => $total,
+            'hasMore'        => $hasMore,
+            'nextPage'       => $hasMore ? $page + 1 : null,
+            'items'          => $items,
+        ];
+    }
+
+    /**
+     * @return list<int>
+     */
+    private function metaOptedInContactIds(int $segmentId, bool $optedIn): array
+    {
+        $permission = 'meta:messages:view';
+        if (!$this->permissions->checkPermissionExists($permission) || !$this->permissions->isGranted($permission)) {
+            throw new AccessDeniedException('Permission denied for '.$permission.'.');
+        }
+
+        $connection = $this->entityManager->getConnection();
+        $identityTable = MAUTIC_TABLE_PREFIX.'meta_contact_identities';
+        if (!$connection->createSchemaManager()->tablesExist([$identityTable])) {
+            throw new BadRequestHttpException('metaOptedIn requires the Mautic Meta integration.');
+        }
+
+        $query = $connection->createQueryBuilder()
+            ->select('DISTINCT membership.lead_id')
+            ->from(MAUTIC_TABLE_PREFIX.'lead_lists_leads', 'membership')
+            ->where('membership.leadlist_id = :segmentId')
+            ->andWhere('membership.manually_removed = 0')
+            ->setParameter('segmentId', $segmentId);
+        $identityJoin = "identity.contact_id = membership.lead_id AND identity.archived_at IS NULL AND identity.consent_status = 'opted_in'";
+
+        if ($optedIn) {
+            $query->innerJoin('membership', $identityTable, 'identity', $identityJoin);
+        } else {
+            $query->leftJoin('membership', $identityTable, 'identity', $identityJoin)
+                ->andWhere('identity.id IS NULL');
+        }
+
+        return array_map('intval', $query->executeQuery()->fetchFirstColumn());
     }
 
     private function listCampaigns(string $query, int $limit, int $page): array
@@ -710,6 +808,24 @@ final class MauticManagementService
     private function contactData(Lead $contact): array
     {
         return ['id' => $contact->getId(), 'name' => $contact->getName(), 'email' => $contact->getEmail(), 'points' => $contact->getPoints(), 'dateModified' => $contact->getDateModified()?->format(DATE_ATOM), 'fields' => $contact->getProfileFields()];
+    }
+
+    private function segmentMemberData(Lead $contact): array
+    {
+        return [
+            'id'           => $contact->getId(),
+            'name'         => $contact->getName(),
+            'firstname'    => $contact->getFirstname(),
+            'lastname'     => $contact->getLastname(),
+            'email'        => $contact->getEmail(),
+            'phone'        => $contact->getPhone(),
+            'mobile'       => $contact->getMobile(),
+            'company'      => $contact->getCompany(),
+            'points'       => $contact->getPoints(),
+            'dateAdded'    => $contact->getDateAdded()?->format(DATE_ATOM),
+            'dateModified' => $contact->getDateModified()?->format(DATE_ATOM),
+            'fields'       => $contact->getProfileFields(),
+        ];
     }
 
     private function segmentData(LeadList $segment): array

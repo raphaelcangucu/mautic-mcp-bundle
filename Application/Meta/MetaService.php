@@ -61,7 +61,7 @@ final class MetaService
     ) {
     }
 
-    public function read(string $resource, ?int $id, int $page, int $limit): array
+    public function read(string $resource, ?int $id, int $page, int $limit, array $contactIds = []): array
     {
         $permissionResource = match ($resource) {
             'connections', 'assets' => 'connections', 'templates' => 'templates', default => 'messages'
@@ -70,6 +70,16 @@ final class MetaService
         $page = max(1, $page);
         $limit = max(1, min(100, $limit));
         $offset = ($page - 1) * $limit;
+        if ([] !== $contactIds && ('identities' !== $resource || null !== $id)) {
+            throw new BadRequestHttpException('contactIds can only be used when listing identities.');
+        }
+        $contactIds = array_values(array_unique(array_map('intval', $contactIds)));
+        if (count($contactIds) > 100) {
+            throw new BadRequestHttpException('contactIds cannot contain more than 100 contacts.');
+        }
+        if ([] !== array_filter($contactIds, static fn (int $contactId): bool => $contactId < 1)) {
+            throw new BadRequestHttpException('contactIds must contain positive contact IDs only.');
+        }
         [$repository, $normalizer] = match ($resource) {
             'connections' => [$this->connections, $this->normalizeConnection(...)],
             'assets' => [$this->assets, $this->normalizeAsset(...)],
@@ -87,11 +97,12 @@ final class MetaService
 
             return $this->redactSecrets(['resource' => $resource, 'item' => $normalizer($entity)]);
         }
-        $total = $repository->count([]);
-        $items = array_map($normalizer, $repository->findBy([], ['id' => 'DESC'], $limit, $offset));
+        $criteria = [] !== $contactIds ? ['contact' => $contactIds, 'archivedAt' => null] : [];
+        $total = $repository->count($criteria);
+        $items = array_map($normalizer, $repository->findBy($criteria, ['id' => 'DESC'], $limit, $offset));
         $hasMore = $offset + count($items) < $total;
 
-        return $this->redactSecrets(['resource' => $resource, 'page' => $page, 'limit' => $limit, 'count' => count($items), 'total' => $total, 'hasMore' => $hasMore, 'nextPage' => $hasMore ? $page + 1 : null, 'items' => $items]);
+        return $this->redactSecrets(['resource' => $resource, 'contactIds' => $contactIds, 'page' => $page, 'limit' => $limit, 'count' => count($items), 'total' => $total, 'hasMore' => $hasMore, 'nextPage' => $hasMore ? $page + 1 : null, 'items' => $items]);
     }
 
     /**

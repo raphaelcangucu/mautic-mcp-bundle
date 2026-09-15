@@ -65,6 +65,30 @@ final class MetaToolContractTest extends TestCase
         self::assertFalse(array_key_exists('idempotencyKey', $dataSchema['properties']));
     }
 
+    public function testReadMetaPublishesBatchContactIdentityFilter(): void
+    {
+        $method = new \ReflectionMethod(ReadMetaTool::class, '__invoke');
+        $contactIdsSchema = $method->getParameters()[4]->getAttributes(Schema::class)[0]->getArguments();
+
+        self::assertSame('contactIds', $method->getParameters()[4]->getName());
+        self::assertSame('array', $contactIdsSchema['type']);
+        self::assertSame(['type' => 'integer', 'minimum' => 1], $contactIdsSchema['items']);
+        self::assertSame(100, $contactIdsSchema['maxItems']);
+        self::assertTrue($contactIdsSchema['uniqueItems']);
+        self::assertSame('Only valid when resource=identities and id is omitted. Omit for every other resource.', $contactIdsSchema['description']);
+    }
+
+    public function testReadMetaConvertsExpectedReadErrorsToStructuredResults(): void
+    {
+        $source = file_get_contents((new \ReflectionClass(ReadMetaTool::class))->getFileName());
+
+        self::assertIsString($source);
+        self::assertStringContainsString('catch (NotFoundHttpException $exception)', $source);
+        self::assertStringContainsString("'type'    => 'not_found'", $source);
+        self::assertStringContainsString('catch (BadRequestHttpException|\\InvalidArgumentException|\\DomainException $exception)', $source);
+        self::assertStringContainsString("'type'    => 'validation'", $source);
+    }
+
     public function testManageMetaPassesTopLevelIdempotencyKeyToUpsertService(): void
     {
         $source = file_get_contents((new \ReflectionClass(ManageMetaTool::class))->getFileName());

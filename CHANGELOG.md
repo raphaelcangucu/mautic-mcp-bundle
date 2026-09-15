@@ -6,6 +6,18 @@
 - Support nested field and submit-action creation/update plus explicitly confirmed nested deletion.
 - Return complete editable form state and `dateModified` from `mautic_read_forms` for safe read-modify-write workflows.
 
+## 0.15.1 - 2026-09-15
+
+- Return structured `validation` and `not_found` results from `mautic_read_meta` instead of surfacing expected client errors as HTTP 500 responses.
+- Document that `contactIds` is valid only for identity-list reads so MCP clients omit it for messages and other Meta resources.
+
+## 0.15.0 - 2026-09-08
+
+- Add paginated, searchable segment-member export through `mautic_read_segments` with `action=members`.
+- Return deterministic contact ordering, phone/mobile values, and complete configured profile fields while excluding manually removed members.
+- Allow `mautic_read_meta` identity reads to filter by up to 100 contact IDs for authoritative consent enrichment of an exported member page.
+- Keep segment membership independent from Meta consent by default and add the optional nullable `metaOptedIn` member filter.
+
 ## 0.14.6 - 2026-09-03
 
 - Report MetaBundle 0.10.4 with canonical WhatsApp `wa_id` service-window matching.
