@@ -19,7 +19,7 @@ final class ReadCampaignFlowTool extends AbstractMcpTool
     ) {}
 
     /**
-     * Read or validate campaign graphs. Actions: list_types, get, validate.
+     * Read or validate campaign graphs. Actions: list_types, get, validate. list_types returns propertiesSchema for native Instagram-comment and WhatsApp campaign events.
      */
     #[McpTool(name: 'mautic_read_campaign_flow', annotations: new ToolAnnotations(readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false), outputSchema: \MauticPlugin\MauticMcpBundle\OutputSchemas::OBJECT)]
     public function __invoke(

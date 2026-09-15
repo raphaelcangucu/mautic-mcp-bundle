@@ -21,7 +21,7 @@ final class ManageCampaignFlowTool extends AbstractMcpTool
     ) {}
 
     /**
-     * Replace a complete campaign graph. Events use key, name, type, eventType, parent, path, properties, trigger, and position. Requires confirm=true.
+     * Replace a complete campaign graph. Events use key, name, type, eventType, parent, path, properties, trigger, and position. Meta types include meta.instagram.comment followed by meta.instagram.comment.private_reply, and meta.whatsapp.send with an account, phone field, approved template, language, and body parameters. Requires confirm=true.
      */
     #[McpTool(name: 'mautic_write_campaign_flow', annotations: new ToolAnnotations(readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false), outputSchema: \MauticPlugin\MauticMcpBundle\OutputSchemas::OBJECT)]
     public function __invoke(

@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## 0.16.0 - 2026-09-15
+
+- Add confirmed, idempotent campaign creation actions for Instagram comment-to-private-reply flows and WhatsApp approved-template sends.
+- Create Meta campaigns as drafts with the selected account, exact Instagram media and keyword, or WhatsApp phone asset, template, language, phone field, parameters, queue, and retry settings.
+- Publish discoverable property schemas and validate active Meta assets, approved WhatsApp templates, parameter counts, parent paths, and channel-specific fields before writing a campaign.
+- Keep campaign and flow creation together, removing the campaign shell if flow persistence fails.
+- Include the form CRUD work previously listed as unreleased.
+
 - Add `mautic_manage_forms` for form creation, partial updates, publishing, unpublishing, and confirmed deletion.
 - Support nested field and submit-action creation/update plus explicitly confirmed nested deletion.
 - Return complete editable form state and `dateModified` from `mautic_read_forms` for safe read-modify-write workflows.

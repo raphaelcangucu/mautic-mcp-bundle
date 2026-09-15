@@ -60,6 +60,7 @@ The server publishes dedicated read and write operations, including evidence-onl
 - contacts, timelines, deduplication, merge, points, stages, companies, fields, and tags;
 - segments and paginated contact-member export through `mautic_read_segments` with `action=members`, including phone, mobile, and all configured profile fields;
 - campaigns and complete graph editing, including event deletion and `lead.changetags` actions;
+- one-call draft creation for Instagram comment/private-reply campaigns (`create_instagram_comment`) and approved WhatsApp template campaigns (`create_whatsapp_template`);
 - emails with complete HTML read/write, absolute preview URLs, public-preview and editing-lock controls, safe send preview, test sends, cloning, and A/B variants;
 - dedicated `mautic_read_email_html` retrieval with an explicit HTML output schema for safe read-modify-write workflows;
 - reusable email-template creation, HTML editing, preview control, and deletion;
@@ -69,6 +70,8 @@ The server publishes dedicated read and write operations, including evidence-onl
 - optional official Meta integration through `MauticMetaBundle`: connection/asset CRUD, WhatsApp templates, identities, message logs, durable queues, WhatsApp text/template/media/interactive delivery, Instagram replies/DMs and live reads, consent management, and diagnostics.
 
 The Meta tools are `mautic_meta_setup`, `mautic_read_meta`, `mautic_read_meta_api`, `mautic_send_meta_message`, and `mautic_manage_meta`. Install and enable `raphaelcangucu/mautic-meta-bundle` on the same Mautic instance to use them.
+
+Create an Instagram comment campaign with `mautic_manage_campaigns` using `action=create_instagram_comment`, `confirm=true`, and `data.instagramComment={assetId,mediaId,keyword,privateReply}`. Create a WhatsApp template campaign with `action=create_whatsapp_template`, `confirm=true`, and `data.whatsapp={assetId,templateName,language,phoneField,bodyParameters,queue,maxAttempts}`. Both actions create an unpublished draft; publish it separately after reviewing the returned flow. Use `dryRun=true` to validate the full definition without writing.
 
 `mautic_manage_meta` supports `upsert_identity` to create the first Meta identity or update an existing identity by `contactId + assetId + channel`. It requires `confirm=true` and `idempotencyKey`. The legacy `link_identity` action only associates an existing identity and therefore requires `id` to be the Meta Identity ID, not the Mautic contact ID.
 

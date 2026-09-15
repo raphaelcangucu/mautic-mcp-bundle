@@ -64,6 +64,8 @@ Prefer dedicated read tools before mutations. Use previews and `dryRun` whenever
 
 `mautic_write_campaign_flow` can replace the complete graph (including replacing it with an empty graph) or remove specific persisted event IDs. `delete_events` rejects parent deletion when children remain unless `cascade=true`. Read the current graph first, perform a `dryRun`, and only then execute with confirmation.
 
+For new Meta campaigns, prefer `mautic_manage_campaigns` with `create_instagram_comment` or `create_whatsapp_template`. Dry-run first and review the selected account/post/keyword or account/template/audience before using `confirm=true`. The tool creates an unpublished draft; publishing remains a separate mutation.
+
 Before changing a form, call `mautic_read_forms` with `action=get` and reuse its `form.dateModified` as `expectedDateModified`. In `mautic_manage_forms`, nested fields/actions with IDs are updated, entries without IDs are created, and omitted entries remain unchanged. Removing nested entries through `deleteFieldIds` or `deleteActionIds`, and deleting the complete form, requires `confirm=true`.
 
 For email A/B tests, call `mautic_manage_emails` with `action=create_ab_test`, the parent email ID, and `data.variants`. Configure `winnerCriteria`, `sendWinnerDelay`, and `totalWeight` in `data`. Use `send_test` with `data.recipients` to send a non-statistical sample before publishing.

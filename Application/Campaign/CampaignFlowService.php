@@ -285,6 +285,9 @@ final class CampaignFlowService
             } elseif (null !== $event['path']) {
                 throw new BadRequestHttpException(sprintf('Event %s cannot define a path after an action.', $key));
             }
+            if ('meta.instagram.comment.private_reply' === $event['type'] && 'meta.instagram.comment' !== $byKey[$parent]['type']) {
+                throw new BadRequestHttpException(sprintf('Event %s must directly follow a meta.instagram.comment decision.', $key));
+            }
             $this->validateConnectionRestriction($key, $event, $byKey[$parent]);
         }
         $this->assertAcyclic($byKey);
@@ -328,6 +331,43 @@ final class CampaignFlowService
 
     private function validateKnownProperties(string $key, string $type, array $properties): void
     {
+        if ('meta.instagram.comment' === $type) {
+            $this->validateMetaAsset($key, $properties, 'instagram_account');
+            $mediaId = trim((string) ($properties['media_id'] ?? ''));
+            if ('' === $mediaId || 1 !== preg_match('/^[0-9]+$/', $mediaId)) {
+                throw new BadRequestHttpException(sprintf('Event %s requires numeric properties.media_id.', $key));
+            }
+            $keyword = trim((string) ($properties['keyword'] ?? ''));
+            if ('' === $keyword || 1 !== preg_match('/^[\p{L}\p{N}_]+$/u', $keyword)) {
+                throw new BadRequestHttpException(sprintf('Event %s requires one whole-word properties.keyword.', $key));
+            }
+        }
+        if ('meta.instagram.comment.private_reply' === $type && '' === trim((string) ($properties['message'] ?? ''))) {
+            throw new BadRequestHttpException(sprintf('Event %s requires properties.message.', $key));
+        }
+        if ('meta.whatsapp.send' === $type) {
+            $asset = $this->validateMetaAsset($key, $properties, 'whatsapp_phone_number');
+            $mode = (string) ($properties['mode'] ?? '');
+            if (!in_array($mode, ['template', 'text'], true)) {
+                throw new BadRequestHttpException(sprintf('Event %s requires properties.mode template or text.', $key));
+            }
+            $phoneField = trim((string) ($properties['phone_field'] ?? ''));
+            if (1 !== preg_match('/^[a-zA-Z][a-zA-Z0-9_]*$/', $phoneField)) {
+                throw new BadRequestHttpException(sprintf('Event %s requires a valid properties.phone_field alias.', $key));
+            }
+            $maxAttempts = (int) ($properties['max_attempts'] ?? 5);
+            if ($maxAttempts < 1 || $maxAttempts > 10) {
+                throw new BadRequestHttpException(sprintf('Event %s requires properties.max_attempts from 1 to 10.', $key));
+            }
+            if (array_key_exists('queue', $properties) && !is_bool($properties['queue'])) {
+                throw new BadRequestHttpException(sprintf('Event %s requires boolean properties.queue.', $key));
+            }
+            if ('template' === $mode) {
+                $this->validateWhatsAppTemplate($key, $asset, $properties);
+            } elseif ('' === trim((string) ($properties['message'] ?? ''))) {
+                throw new BadRequestHttpException(sprintf('Event %s requires properties.message in text mode.', $key));
+            }
+        }
         if ('email.send' === $type) {
             $emailId = (int) ($properties['email'] ?? 0);
             if ($emailId < 1 || !$this->entityManager->getRepository(Email::class)->find($emailId) instanceof Email) {
@@ -352,6 +392,131 @@ final class CampaignFlowService
                 }
             }
         }
+    }
+
+    private function validateMetaAsset(string $key, array $properties, string $expectedType): object
+    {
+        $assetId = (int) ($properties['asset_id'] ?? 0);
+        if ($assetId < 1) {
+            throw new BadRequestHttpException(sprintf('Event %s requires a positive properties.asset_id.', $key));
+        }
+
+        $assetClass = 'MauticPlugin\MauticMetaBundle\Entity\MetaAsset';
+        if (!class_exists($assetClass)) {
+            throw new BadRequestHttpException(sprintf('Event %s requires the Mautic Meta integration.', $key));
+        }
+        $asset = $this->entityManager->getRepository($assetClass)->find($assetId);
+        if (!is_object($asset) || !method_exists($asset, 'getType') || !method_exists($asset, 'getStatus')) {
+            throw new BadRequestHttpException(sprintf('Event %s references missing Meta asset %d.', $key, $assetId));
+        }
+        $type = $asset->getType();
+        $typeValue = $type instanceof \BackedEnum ? (string) $type->value : (string) $type;
+        if ($expectedType !== $typeValue) {
+            throw new BadRequestHttpException(sprintf('Event %s requires a %s asset; asset %d is %s.', $key, $expectedType, $assetId, $typeValue));
+        }
+        if ('active' !== $asset->getStatus()) {
+            throw new BadRequestHttpException(sprintf('Event %s requires an active Meta asset; asset %d is %s.', $key, $assetId, $asset->getStatus()));
+        }
+
+        return $asset;
+    }
+
+    private function validateWhatsAppTemplate(string $key, object $phoneAsset, array $properties): void
+    {
+        $name = trim((string) ($properties['template_name'] ?? ''));
+        $language = trim((string) ($properties['language'] ?? ''));
+        if ('' === $name || '' === $language) {
+            throw new BadRequestHttpException(sprintf('Event %s requires properties.template_name and properties.language.', $key));
+        }
+
+        $templateClass = 'MauticPlugin\MauticMetaBundle\Entity\WhatsAppTemplate';
+        if (!class_exists($templateClass)) {
+            throw new BadRequestHttpException(sprintf('Event %s requires the Mautic Meta integration.', $key));
+        }
+
+        $templates = $this->entityManager->getRepository($templateClass)->findBy([
+            'name' => $name,
+            'language' => $language,
+            'status' => 'APPROVED',
+        ]);
+        $settings = method_exists($phoneAsset, 'getSettings') ? $phoneAsset->getSettings() : [];
+        $wabaExternalId = (string) ($settings['waba_id'] ?? '');
+        $phoneConnectionId = method_exists($phoneAsset, 'getConnection') ? $phoneAsset->getConnection()->getId() : null;
+        $template = null;
+        foreach ($templates as $candidate) {
+            if (!is_object($candidate) || !method_exists($candidate, 'getBusinessAccount')) {
+                continue;
+            }
+            $businessAccount = $candidate->getBusinessAccount();
+            if (
+                $businessAccount->getConnection()->getId() === $phoneConnectionId
+                && ('' === $wabaExternalId || $businessAccount->getExternalId() === $wabaExternalId)
+            ) {
+                $template = $candidate;
+                break;
+            }
+        }
+        if (null === $template) {
+            throw new BadRequestHttpException(sprintf('Event %s requires approved template %s (%s) for the selected WhatsApp account.', $key, $name, $language));
+        }
+
+        $requiredParameters = 0;
+        foreach ($template->getComponents() as $component) {
+            if ('BODY' !== strtoupper((string) ($component['type'] ?? ''))) {
+                continue;
+            }
+            preg_match_all('/\{\{([0-9]+)\}\}/', (string) ($component['text'] ?? ''), $matches);
+            foreach ($matches[1] ?? [] as $position) {
+                $requiredParameters = max($requiredParameters, (int) $position);
+            }
+        }
+        $bodyParameters = preg_split('/\R/', trim((string) ($properties['body_parameters'] ?? '')), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        if ($requiredParameters !== count($bodyParameters)) {
+            throw new BadRequestHttpException(sprintf(
+                'Event %s template %s requires %d body parameter line(s); %d supplied.',
+                $key,
+                $name,
+                $requiredParameters,
+                count($bodyParameters),
+            ));
+        }
+    }
+
+    private function knownPropertiesSchema(string $type): ?array
+    {
+        return match ($type) {
+            'meta.instagram.comment' => [
+                'required' => ['asset_id', 'media_id', 'keyword'],
+                'properties' => [
+                    'asset_id' => ['type' => 'integer', 'description' => 'Active Instagram Meta asset ID.'],
+                    'media_id' => ['type' => 'string', 'pattern' => '^[0-9]+$', 'description' => 'Exact numeric Instagram media ID.'],
+                    'keyword' => ['type' => 'string', 'description' => 'Whole-word keyword; accents and case are ignored.'],
+                ],
+            ],
+            'meta.instagram.comment.private_reply' => [
+                'required' => ['message'],
+                'properties' => [
+                    'message' => ['type' => 'string', 'minLength' => 1, 'description' => 'Private reply sent to the matching commenter.'],
+                ],
+                'parentType' => 'meta.instagram.comment',
+                'path' => 'yes',
+            ],
+            'meta.whatsapp.send' => [
+                'required' => ['asset_id', 'mode', 'phone_field'],
+                'properties' => [
+                    'asset_id' => ['type' => 'integer', 'description' => 'Active WhatsApp phone-number Meta asset ID.'],
+                    'mode' => ['enum' => ['template', 'text']],
+                    'phone_field' => ['type' => 'string', 'default' => 'mobile'],
+                    'template_name' => ['type' => 'string', 'description' => 'Required in template mode; must be approved for the selected account.'],
+                    'language' => ['type' => 'string', 'default' => 'pt_BR'],
+                    'body_parameters' => ['type' => 'string', 'description' => 'One resolved template body parameter per line.'],
+                    'message' => ['type' => 'string', 'description' => 'Required in text mode.'],
+                    'queue' => ['type' => 'boolean', 'default' => true],
+                    'max_attempts' => ['type' => 'integer', 'minimum' => 1, 'maximum' => 10, 'default' => 5],
+                ],
+            ],
+            default => null,
+        };
     }
 
     private function validateConnectionRestriction(string $key, array $event, array $parent): void
@@ -402,6 +567,7 @@ final class CampaignFlowService
             'channel' => $definition->getChannel(),
             'channelIdField' => $definition->getChannelIdField(),
             'connectionRestrictions' => $definition->getConnectionRestrictions(),
+            'propertiesSchema' => $this->knownPropertiesSchema($key),
         ];
     }
 
