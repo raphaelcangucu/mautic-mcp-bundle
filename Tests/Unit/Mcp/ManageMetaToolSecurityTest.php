@@ -9,6 +9,13 @@ use PHPUnit\Framework\TestCase;
 
 final class ManageMetaToolSecurityTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        if (!class_exists(ManageMetaTool::class)) {
+            self::markTestSkipped('The Meta tools ship with the optional raphaelcangucu/mautic-meta-bundle.');
+        }
+    }
+
     public function testDryRunPayloadRedactsAllConnectionCredentials(): void
     {
         $tool = (new \ReflectionClass(ManageMetaTool::class))->newInstanceWithoutConstructor();

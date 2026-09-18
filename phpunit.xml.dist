@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="Tests/bootstrap.php"
+         colors="true"
+         cacheDirectory=".phpunit.cache"
+         failOnDeprecation="true"
+         failOnWarning="true"
+         failOnNotice="true">
+    <testsuites>
+        <testsuite name="unit">
+            <directory>Tests/Unit</directory>
+        </testsuite>
+    </testsuites>
+    <source>
+        <include>
+            <directory>Application</directory>
+            <directory>Command</directory>
+            <directory>Mcp</directory>
+        </include>
+    </source>
+</phpunit>
