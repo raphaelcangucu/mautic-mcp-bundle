@@ -22,6 +22,29 @@ final class McpAccountController extends AbstractController
         return $this->redirectToRoute('mautic_user_account', ['_fragment' => 'mcp-access']);
     }
 
+    public function issue(Request $request, UserHelper $userHelper, McpTokenService $tokens): RedirectResponse
+    {
+        $this->validateCsrf($request);
+        $issued = $tokens->issue($this->user($userHelper));
+        $this->addFlash('notice', sprintf('Token MCP #%d criado. Os tokens ja conectados continuam validos.', $issued['id']));
+
+        return $this->redirectToRoute('mautic_user_account', ['_fragment' => 'mcp-access']);
+    }
+
+    public function revokeOne(Request $request, UserHelper $userHelper, McpTokenService $tokens): RedirectResponse
+    {
+        $this->validateCsrf($request);
+        $id = $request->request->getInt('id');
+
+        if ($id < 1 || !$tokens->revokeById($this->user($userHelper), $id)) {
+            $this->addFlash('error', 'Token MCP nao encontrado.');
+        } else {
+            $this->addFlash('notice', sprintf('Token MCP #%d revogado. Os demais continuam validos.', $id));
+        }
+
+        return $this->redirectToRoute('mautic_user_account', ['_fragment' => 'mcp-access']);
+    }
+
     public function revoke(Request $request, UserHelper $userHelper, McpTokenService $tokens): RedirectResponse
     {
         $this->validateCsrf($request);
