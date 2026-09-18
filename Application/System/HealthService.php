@@ -23,7 +23,7 @@ final class HealthService
         return [
             'status'        => 'ok',
             'mauticVersion' => defined('MAUTIC_VERSION') ? MAUTIC_VERSION : 'unknown',
-            'mcpVersion'    => '0.16.0',
+            'mcpVersion'    => '0.17.0',
             'phpVersion'    => PHP_VERSION,
             'environment'   => $this->kernel->getEnvironment(),
             'user'          => null === $user ? null : [

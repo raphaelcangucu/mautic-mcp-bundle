@@ -142,3 +142,7 @@ GPL-3.0-or-later. See [LICENSE](LICENSE).
 - [Model Context Protocol](https://modelcontextprotocol.io/) and the Symfony MCP ecosystem — the protocol and server components used by the integration.
 
 Contributions from the upstream project remain governed by their original authorship and Git history. New contributions are credited through commits and pull requests.
+
+## Plugin-owned tools (0.17)
+
+Meta and Inbox now supply their own MCP tools. See [provider registration, migration and tool contracts](docs/PLUGIN-PROVIDERS.md). Clear the cache and reconnect MCP clients after updating the coordinated plugins.

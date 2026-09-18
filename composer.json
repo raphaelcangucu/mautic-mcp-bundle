@@ -31,7 +31,8 @@
         "install-directory-name": "MauticMcpBundle"
     },
     "suggest": {
-        "raphaelcangucu/mautic-meta-bundle": "Adds official WhatsApp and Instagram read, send, template, consent, and diagnostics tools."
+        "raphaelcangucu/mautic-meta-bundle": "Adds official WhatsApp and Instagram read, send, template, consent, and diagnostics tools.",
+        "raphaelcangucu/mautic-inbox-bundle": "Adds multichannel inbox, AI agents, documents and Pi tools through Config/mcp.php."
     },
     "require": {
         "php": "^8.2",
