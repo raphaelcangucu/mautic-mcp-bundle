@@ -3,13 +3,23 @@
 return [
     'name'        => 'Mautic MCP Bundle',
     'description' => 'Full MCP tools for Mautic automation, analytics, CRM, tags, forms, and webhooks.',
-    'version'     => '0.16.0',
+    'version'     => '0.18.0',
     'author'      => 'Rahul Shinde',
     'routes'      => [
         'main' => [
             'mautic_mcp_account_rotate' => [
                 'path'       => '/account/mcp/token/rotate',
                 'controller' => 'MauticPlugin\\MauticMcpBundle\\Controller\\McpAccountController::rotate',
+                'method'     => 'POST',
+            ],
+            'mautic_mcp_account_issue' => [
+                'path'       => '/account/mcp/token/issue',
+                'controller' => 'MauticPlugin\\MauticMcpBundle\\Controller\\McpAccountController::issue',
+                'method'     => 'POST',
+            ],
+            'mautic_mcp_account_revoke_one' => [
+                'path'       => '/account/mcp/token/revoke-one',
+                'controller' => 'MauticPlugin\\MauticMcpBundle\\Controller\\McpAccountController::revokeOne',
                 'method'     => 'POST',
             ],
             'mautic_mcp_account_revoke' => [

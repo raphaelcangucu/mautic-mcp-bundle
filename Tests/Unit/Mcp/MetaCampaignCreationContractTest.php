@@ -79,7 +79,6 @@ final class MetaCampaignCreationContractTest extends TestCase
         $reflection = new \ReflectionClass(CampaignFlowService::class);
         $service = $reflection->newInstanceWithoutConstructor();
         $method = $reflection->getMethod('knownPropertiesSchema');
-        $method->setAccessible(true);
 
         $instagram = $method->invoke($service, 'meta.instagram.comment');
         $whatsApp = $method->invoke($service, 'meta.whatsapp.send');
@@ -97,7 +96,6 @@ final class MetaCampaignCreationContractTest extends TestCase
         $reflection = new \ReflectionClass(MetaCampaignCreationService::class);
         $service = $reflection->newInstanceWithoutConstructor();
         $method = $reflection->getMethod('definition');
-        $method->setAccessible(true);
 
         return $method->invoke($service, $action, $data);
     }
