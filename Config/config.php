@@ -12,6 +12,16 @@ return [
                 'controller' => 'MauticPlugin\\MauticMcpBundle\\Controller\\McpAccountController::rotate',
                 'method'     => 'POST',
             ],
+            'mautic_mcp_account_issue' => [
+                'path'       => '/account/mcp/token/issue',
+                'controller' => 'MauticPlugin\\MauticMcpBundle\\Controller\\McpAccountController::issue',
+                'method'     => 'POST',
+            ],
+            'mautic_mcp_account_revoke_one' => [
+                'path'       => '/account/mcp/token/revoke-one',
+                'controller' => 'MauticPlugin\\MauticMcpBundle\\Controller\\McpAccountController::revokeOne',
+                'method'     => 'POST',
+            ],
             'mautic_mcp_account_revoke' => [
                 'path'       => '/account/mcp/token/revoke',
                 'controller' => 'MauticPlugin\\MauticMcpBundle\\Controller\\McpAccountController::revoke',

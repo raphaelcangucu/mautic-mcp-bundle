@@ -11,26 +11,43 @@
                     <label>URL do servidor</label>
                     <input class="form-control" type="text" readonly value="{{ mcpEndpoint }}" onclick="this.select()">
                 </div>
-                {% if mcpAccess %}
-                    <div class="form-group">
-                        <label>Bearer token do seu usuário</label>
-                        <input class="form-control" type="text" readonly value="{{ mcpAccess.token }}" onclick="this.select()" autocomplete="off">
-                        <div class="help-block">Expira em {{ mcpAccess.expiresAt }}. Trate este valor como uma senha.</div>
-                    </div>
-                    <pre>{"mcpServers":{"mautic":{"url":"{{ mcpEndpoint }}","headers":{"Authorization":"Bearer {{ mcpAccess.token }}"}}}}</pre>
-                    <div class="btn-group">
-                        <form method="post" action="{{ path('mautic_mcp_account_rotate') }}" style="display:inline">
+
+                {% if mcpTokens is not empty %}
+                    <p>Você tem <strong>{{ mcpTokens|length }}</strong> token(s) ativo(s). Cada cliente pode usar o seu próprio — revogar um não afeta os outros.</p>
+
+                    {% for token in mcpTokens %}
+                        <div class="well well-sm">
+                            <div class="form-group">
+                                <label>Token #{{ token.id }}</label>
+                                <input class="form-control" type="text" readonly value="{{ token.token }}" onclick="this.select()" autocomplete="off">
+                                <div class="help-block">Expira em {{ token.expiresAt }}. Trate este valor como uma senha.</div>
+                            </div>
+                            <pre>{"mcpServers":{"mautic":{"url":"{{ mcpEndpoint }}","headers":{"Authorization":"Bearer {{ token.token }}"}}}}</pre>
+                            <form method="post" action="{{ path('mautic_mcp_account_revoke_one') }}" onsubmit="return confirm('Revogar apenas o token #{{ token.id }}? Os demais continuam válidos.')">
+                                <input type="hidden" name="_token" value="{{ csrf_token('mautic_mcp_token') }}">
+                                <input type="hidden" name="id" value="{{ token.id }}">
+                                <button class="btn btn-default btn-sm" type="submit">Revogar somente este</button>
+                            </form>
+                        </div>
+                    {% endfor %}
+
+                    <div class="btn-group mt-sm">
+                        <form method="post" action="{{ path('mautic_mcp_account_issue') }}" style="display:inline">
                             <input type="hidden" name="_token" value="{{ csrf_token('mautic_mcp_token') }}">
-                            <button class="btn btn-warning" type="submit">Gerar novo token</button>
+                            <button class="btn btn-primary" type="submit">Gerar token adicional</button>
                         </form>
-                        <form method="post" action="{{ path('mautic_mcp_account_revoke') }}" style="display:inline" onsubmit="return confirm('Revogar este token MCP?')">
+                        <form method="post" action="{{ path('mautic_mcp_account_rotate') }}" style="display:inline" onsubmit="return confirm('Isto APAGA todos os {{ mcpTokens|length }} token(s) e cria um só no lugar. Todo cliente conectado para de funcionar. Continuar?')">
                             <input type="hidden" name="_token" value="{{ csrf_token('mautic_mcp_token') }}">
-                            <button class="btn btn-danger" type="submit">Revogar token</button>
+                            <button class="btn btn-warning" type="submit">Substituir todos por um novo</button>
+                        </form>
+                        <form method="post" action="{{ path('mautic_mcp_account_revoke') }}" style="display:inline" onsubmit="return confirm('Revogar TODOS os tokens MCP deste usuário?')">
+                            <input type="hidden" name="_token" value="{{ csrf_token('mautic_mcp_token') }}">
+                            <button class="btn btn-danger" type="submit">Revogar todos</button>
                         </form>
                     </div>
                 {% else %}
                     <p>Nenhum token MCP ativo.</p>
-                    <form method="post" action="{{ path('mautic_mcp_account_rotate') }}">
+                    <form method="post" action="{{ path('mautic_mcp_account_issue') }}">
                         <input type="hidden" name="_token" value="{{ csrf_token('mautic_mcp_token') }}">
                         <button class="btn btn-primary" type="submit">Gerar meu token MCP</button>
                     </form>
