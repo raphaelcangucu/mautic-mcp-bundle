@@ -35,7 +35,7 @@ class MauticMcpExtension extends Extension implements PrependExtensionInterface
                 'http'  => true,
             ],
             'http'              => [
-                'path'    => '/mcp',
+                'path'    => '/api/mcp',
                 'session' => [
                     'store'      => 'cache',
                     'cache_pool' => 'cache.mcp.sessions',

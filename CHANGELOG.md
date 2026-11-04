@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.19.0 - 2026-11-04
+
+- Move the HTTP endpoint from `/mcp` to `/api/mcp`. The core `api` firewall now requires the OAuth token, so the plugin no longer depends on a custom `mcp` firewall in `app/config/security.php`. Clients must update the URL; tokens stay valid.
+
 ## 0.18.2 - 2026-11-04
 
 - Exclude `Tests` relative to the scan dir. The full path never matched, and a build without PHPUnit made discovery return 0 tools.

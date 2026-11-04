@@ -35,7 +35,7 @@ final class ProfileMcpSubscriber implements EventSubscriberInterface
             return;
         }
         $request = $this->requestStack->getCurrentRequest();
-        $endpoint = null === $request ? '/mcp' : $request->getSchemeAndHttpHost().$request->getBaseUrl().'/mcp';
+        $endpoint = null === $request ? '/api/mcp' : $request->getSchemeAndHttpHost().$request->getBaseUrl().'/api/mcp';
         $event->setVars($event->getVars() + ['mcpAccess' => $this->tokens->current($user), 'mcpTokens' => $this->tokens->listActive($user), 'mcpEndpoint' => $endpoint]);
         $event->setTemplate('@MauticMcp/Account/profile_mcp.html.twig');
     }

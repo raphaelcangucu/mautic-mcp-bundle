@@ -3,7 +3,7 @@
 return [
     'name'        => 'Mautic MCP Bundle',
     'description' => 'Full MCP tools for Mautic automation, analytics, CRM, tags, forms, and webhooks.',
-    'version'     => '0.18.2',
+    'version'     => '0.19.0',
     'author'      => 'Rahul Shinde',
     'routes'      => [
         'main' => [
@@ -28,7 +28,8 @@ return [
                 'method'     => 'POST',
             ],
         ],
-        'public' => [
+        // The core `api` firewall protects every /api/ route with OAuth.
+        'api' => [
             'mautic_mcp_http_endpoint' => [
                 'path'       => '/mcp',
                 'controller' => 'mcp.server.controller::handle',

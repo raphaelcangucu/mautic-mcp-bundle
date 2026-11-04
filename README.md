@@ -27,7 +27,7 @@ Alternatively, clone the bundle into `plugins/MauticMcpBundle` and ensure the ro
 The Streamable HTTP endpoint is available at:
 
 ```text
-https://your-mautic.example/mcp
+https://your-mautic.example/api/mcp
 ```
 
 Each logged-in user can manage their personal bearer token under the Mautic profile page in the **MCP Access** panel. Tokens inherit that user's Mautic permissions.
@@ -44,7 +44,7 @@ Add this to `~/.codex/config.toml`:
 
 ```toml
 [mcp_servers.mautic]
-url = "https://your-mautic.example/mcp"
+url = "https://your-mautic.example/api/mcp"
 bearer_token_env_var = "MAUTIC_MCP_TOKEN"
 default_tools_approval_mode = "writes"
 tool_timeout_sec = 120
