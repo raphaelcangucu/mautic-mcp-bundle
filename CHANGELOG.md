@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.18.2 - 2026-11-04
+
+- Exclude `Tests` relative to the scan dir. The full path never matched, and a build without PHPUnit made discovery return 0 tools.
+
 ## 0.18.1 - 2026-11-04
 
 - Stop `notifications/cancelled` and `notifications/roots/list_changed` from ending in a 500: mcp/sdk 0.4 could not save a session that nothing had read.

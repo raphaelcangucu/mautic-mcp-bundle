@@ -26,7 +26,7 @@ class MauticMcpExtension extends Extension implements PrependExtensionInterface
             'discovery'         => [
                 'scan_dirs'    => array_merge(['plugins/MauticMcpBundle'], array_column($this->providers($container), 'scan_directory')),
                 'exclude_dirs' => [
-                    'plugins/MauticMcpBundle/Tests',
+                    'Tests',
                     'plugins/MauticMcpBundle/Mcp/Tool/Meta',
                 ],
             ],
