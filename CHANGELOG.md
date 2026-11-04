@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.18.1 - 2026-11-04
+
+- Stop `notifications/cancelled` and `notifications/roots/list_changed` from ending in a 500: mcp/sdk 0.4 could not save a session that nothing had read.
+
 ## 0.16.0 - 2026-09-15
 
 - Add confirmed, idempotent campaign creation actions for Instagram comment-to-private-reply flows and WhatsApp approved-template sends.
